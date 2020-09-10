@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<applicationSettings>
+  <CNET2FLEX.Properties.Settings>
+    <setting name="GLN" serializeAs="Xml">
+      <value>
+        <ArrayOfString xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+          <string>7807900001686;WalMart 111 Centro de Distribucion Lo Aguirre;Avenida Los Vientos 2055;SANTIAGO</string>
+          <string>7808810008406;SUPERMERCADOS MONTSERRAT SAC. (EL BOSQUE); JOSE MIGUEL CARRERA 13125;EL BOSQUE</string>
+          <string>7804647170101;HIPERMERCADOS TOTTUS, CD Secos; Camino la Farfana 400, Pudahuel;SANTIAGO</string>
+          <string>7808800107607;RENDIC HERMANOS S.A. (A021: Centro Dist Puerto Madero);Laguna sur 9600;SANTIAGO</string>
+          <string>7807975000287;RENDIC HERMANOS S.A. (Cd 9212 VH   (VH=Venta Hogar));9212 PEDRO AGUIRRE CERDA 8455;SANTIAGO</string>
+          <string>7807975001925;RENDIC HERMANOS S.A. (CD COQUIMBO SECOS);Parcela 109A Sector Pan de Azucar;COQUIMBO</string>
+          <string>7808810009076;ALVI SUPERMERCADO MAYORISTA S.A. (CENTRO LOGISTICO);LO BLANCO 2531;SANTIAGO</string>
+          <string>7808810008390;SUPERMERCADOS MONTSERRAT SAC. (PAJARITOS);AV. PAJARITOS 6950;SANTIAGO</string>
+          <string>7807900009361;WALMART CHILE S.A. (592 Super Bodega Acuenta Talca Terminal);Av Doce Oriente 848;TALCA</string>
+          <string>7807900006117;WALMART CHILE S.A. (592 Super Bodega Acuenta Talca Terminal);Av Doce Oriente 848;TALCA</string>
+        </ArrayOfString>
+      </value>
+    </setting>  
+  <setting name="RutSociedades" serializeAs="Xml">
+    <value>
+      <ArrayOfString xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+        <string>78279920-7;IMPORTADORA Y COMERCIAL STARFOOD LTDA.;002;7801434CL0001</string>
+        <string>76098197-4;DISTRIBUIDORA STARFOOD;008;7804647530004</string>
+      </ArrayOfString>
+    </value>
+  </setting>
+  <setting name="CtacteComercioNet2Flex" serializeAs="Xml">
+    <value>
+      <ArrayOfString xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+        <string>925485K200;76042014;WALMART CHILE S.A.</string>
+        <string>7807913CL0001;93307000;SUPERMERCADOS MONTSERRAT S.A.C.</string>
+      </ArrayOfString>
+    </value>
+  </setting>
+	<setting name="FTPServer" serializeAs="String">
+		  <value>ftp://test.rebex.net/</value>
+	</setting>
+    <setting name="FTPPort" serializeAs="String">
+          <value>21</value>
+    </setting>
+     <setting name="FTPUser" serializeAs="String">
+          <value>demo</value>
+    </setting>
+    <setting name="FTPPassword" serializeAs="String">
+          <value>password</value>
+    </setting>
+	<setting name="SMTPName" serializeAs="String">
+      <value>smtp.gmail.com</value>
+    </setting>
+    <setting name="SMTPPort" serializeAs="String">
+      <value>587</value>
+    </setting>
+    <setting name="EnableSSL" serializeAs="String">
+      <value>True</value>
+    </setting>
+    <setting name="EmailUser" serializeAs="String">
+      <value>ceccuentos@gmail.com</value>
+    </setting>
+    <setting name="EmailPassword" serializeAs="String">
+      <value>26VicenteAmanda24</value>
+    </setting>
+    <setting name="EmailTO" serializeAs="String">
+      <value>cristian.enrique.contreras@gmail.com</value>
+    </setting>
+    <setting name="EmailTO2" serializeAs="String">
+      <value>cristian.contreras@codevsys.cl</value>
+    </setting>
+    <setting name="DirectorioFTPCNET" serializeAs="String">
+      <value>/Users/cec/OneDrive/Comercial/Starfood/Comercionet_distribuidora</value>
+    </setting>
+    <setting name="StringConexionSisPal" serializeAs="String">
+      <value>Data Source=Localhost;Initial Catalog=BdFlexline;user Id=sa;password=27Asimov2020</value>
+    </setting>
+    <setting name="StringConexionFlexline" serializeAs="String">
+      <value>Data Source=Localhost;Initial Catalog=BdFlexline;user Id=sa;password=27Asimov2020</value>
+    </setting>
+  </CNET2FLEX.Properties.Settings>
+</applicationSettings>
