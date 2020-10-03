@@ -7,6 +7,7 @@
           xmlns:xsd="http://www.w3.org/2001/XMLSchema">
           <string>7807900001686;WalMart 111 Centro de Distribucion Lo Aguirre;Avenida Los Vientos 2055;SANTIAGO</string>
           <string>7808810008406;SUPERMERCADOS MONTSERRAT SAC. (EL BOSQUE); JOSE MIGUEL CARRERA 13125;EL BOSQUE</string>
+          <string>7808800001332;SUPERMERCADOS MONTSERRAT SAC. (Gabriela); Av. Gabriela N. 02710;SANTIAGO</string>
           <string>7804647170101;HIPERMERCADOS TOTTUS, CD Secos; Camino la Farfana 400, Pudahuel;SANTIAGO</string>
           <string>7808800107607;RENDIC HERMANOS S.A. (A021: Centro Dist Puerto Madero);Laguna sur 9600;SANTIAGO</string>
           <string>7807975000287;RENDIC HERMANOS S.A. (Cd 9212 VH   (VH=Venta Hogar));9212 PEDRO AGUIRRE CERDA 8455;SANTIAGO</string>
@@ -14,7 +15,43 @@
           <string>7808810009076;ALVI SUPERMERCADO MAYORISTA S.A. (CENTRO LOGISTICO);LO BLANCO 2531;SANTIAGO</string>
           <string>7808810008390;SUPERMERCADOS MONTSERRAT SAC. (PAJARITOS);AV. PAJARITOS 6950;SANTIAGO</string>
           <string>7807900009361;WALMART CHILE S.A. (592 Super Bodega Acuenta Talca Terminal);Av Doce Oriente 848;TALCA</string>
-          <string>7807900006117;WALMART CHILE S.A. (592 Super Bodega Acuenta Talca Terminal);Av Doce Oriente 848;TALCA</string>
+          <string>7807900006117;WALMART CHILE S.A. (592 Super Bodega Acuenta Talca Terminal);Av Doce Oriente 848;TALCA</string>    
+          <string>7807900009392;WALMART CHILE S.A. (592 Super Bodega Acuenta Talca Terminal);Av Doce Oriente 848;TALCA</string>    
+          <string>7807975000089;RENDIC HERMANOS S.A. (Unimarc VICENTE VALDES);VICENTE VALDES 85;SANTIAGO</string>
+          <string>7807975000140;RENDIC HERMANOS S.A. (Unimarc Maipu 4 Poniente);4 PONIENTE  Nº 1197;SANTIAGO</string>
+          <string>7807975000287;RENDIC HERMANOS S.A. (Cd 9212 VH   (VH=Venta Hogar));9212 PEDRO AGUIRRE CERDA 8455;SANTIAGO</string>
+          <string>7807975000423;RENDIC HERMANOS S.A. (UNIMARC LOS DOMINICOS);LOS DOMINICOS 8630;SANTIAGO</string>
+          <string>7808800098042;RENDIC HERMANOS S.A. (Tienda Villa Olimpica);Obispo Orrego 1250;SANTIAGO</string>
+          <string>7808800108130;RENDIC HERMANOS S.A. (Cofrima 3);Av. Salvador Allende 349;PUNTA ARENAS</string>
+          <string>7808800092279;ALVI SUPERMERCADO MAYORISTA S.A. (SUCURSAL PAJARITOS);AV PAJARITOS NRO 5100;SANTIAGO</string>
+          <string>7808709800159;ALVI SUPERMERCADO MAYORISTA S.A. (CD ALVI);San Eugenio 12911;SANTIAGO</string>
+          <string>7808800104026;RENDIC HERMANOS S.A. (P CRISTO AMBROSIO OHIGGINS);	AV AMBORISO O'HIGGINS 1920;CURACAVI</string>
+          <string>7808800008669;Supermercados San Francisco S.A.;Eyzaguirre 715;TALAGANTE</string>
+          <string>7808800001349;SUPERMERCADOS MONTSERRAT SAC. (Conchali);Av. Independencia N. 3601;SANTIAGO</string>
+          <string>7808800001356;SUPERMERCADOS MONTSERRAT SAC. (Quilicura);Av.Jose Fco.Vergara N. 159;SANTIAGO</string>
+          <string>7808800016008;SUPERMERCADOS MONTSERRAT SAC. (Paine);Av.General Baquedano 890;PAINE</string>
+          <string>7808800076491;SUPERMERCADOS MONTSERRAT SAC. (LOS ANDES);Av. Hermanos Clark N. 55;LOS ANDES</string>
+          <string>7808800085820;SUPERMERCADOS MONTSERRAT SAC. (El Peñon);AV. MEXICO 1915;SANTIAGO</string>
+          <string>7808800091081;SUPERMERCADOS MONTSERRAT SAC. (Renca 2);Jose Manuel Balmaceda 4569;SANTIAGO</string>
+          <string>7808800108642;SUPERMERCADOS MONTSERRAT SAC. (Eyzaguirre);Eyzaguirre N. 020501;SANTIAGO</string>
+          <string>7808800109915;SUPERMERCADOS MONTSERRAT SAC. (Buin);Balmaceda N. 899;BUIN</string>
+          <string>7808800115732;SUPERMERCADOS MONTSERRAT SAC. (LA Foresta);Edmundo Eluchans N. 1980;BUIN</string>
+          <string>7808800120507;SUPERMERCADOS MONTSERRAT SAC. (Puente Alto II);Santa Josefina N.40;SANTIAGO</string>
+          <string>7808800121368;SUPERMERCADOS MONTSERRAT SAC. (Limache);Calle Prat N. 15;LIMACHE</string>
+          <string>7808800121375;SUPERMERCADOS MONTSERRAT SAC. (Algarrobal);	Carretera Gral San Martin Kl 10;COLINA</string>
+          <string>7808800123072;SUPERMERCADOS MONTSERRAT SAC. (Renca III);Miraflores 8045;SANTIAGO</string>
+          <string>7808800125588;SUPERMERCADOS MONTSERRAT SAC. (Calera de Tango);paradero 4 1/2 Calera de Tango;CALERA DE TANGO</string>
+          <string>7808810005634;SUPERMERCADOS MONTSERRAT SAC. (Americo Vespucio);AV. AMERICO VESPUCIO 7500;SANTIAGO</string>
+          <string>7808810005658;SUPERMERCADOS MONTSERRAT SAC. (Bodega Central);AV. EDUARDO FREI MONTALV 4475;SANTIAGO</string>
+          <string>7808810005672;SUPERMERCADOS MONTSERRAT SAC. (Grecia);AV. GRECIA 8585;SANTIAGO</string>
+          <string>7808810005689;SUPERMERCADOS MONTSERRAT SAC. (Independencia);INDEPENDENCIA 2127;SANTIAGO</string>
+          <string>7808810005696;SUPERMERCADOS MONTSERRAT SAC. (MONJITAS);MONJITAS 739;SANTIAGO</string>
+          <string>7808810005719;SUPERMERCADOS MONTSERRAT SAC. (WALKER MARTINEZ);AV. WALKER MARTINEZ 1650;SANTIAGO</string>
+          <string>7808810007003;SUPERMERCADOS MONTSERRAT SAC. (IRARRAZAVAL);AV. IRARRAZAVAL 1489;SANTIAGO</string>
+          <string>7808810007010;SUPERMERCADOS MONTSERRAT SAC. (AV. DGO. SANTA MARIA);	AV. DGO. SANTA MARIA 4122;SANTIAGO</string>
+          <string>7808810007096;SUPERMERCADOS MONTSERRAT SAC. (Av. Las Condes);	AV. LAS CONDES 9160;SANTIAGO</string>
+          <string>7808810007126;SUPERMERCADOS MONTSERRAT SAC. (Vicuña Mackenna);AV. VICUÑA MACKENNA 12321;SANTIAGO</string>
+          <string>7808810008383;SUPERMERCADOS MONTSERRAT SAC. (Colina);Vada. Gral. San MArtin 068;COLINA</string>
         </ArrayOfString>
       </value>
     </setting>  
@@ -31,8 +68,11 @@
     <value>
       <ArrayOfString xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-        <string>925485K200;76042014;WALMART CHILE S.A.</string>
-        <string>7807913CL0001;93307000;SUPERMERCADOS MONTSERRAT S.A.C.</string>
+        <string>925485K200;76042014;WALMART CHILE S.A.;LIDER 4</string>
+        <string>7807913CL0001;93307000;SUPERMERCADOS MONTSERRAT S.A.C.;LIDER 4</string>
+        <string>7808800117842;81537600;RENDIC HERMANOS S.A.;LIDER 4</string>
+        <string>7808800008669;78627210;HIPERMERCADO TOTTUS S.A.;LIDER 4</string>
+        <string>7800110CL0001;96618540;ALVI SUPER MAYORISTA S.A.;LIDER 4</string>
       </ArrayOfString>
     </value>
   </setting>
@@ -70,6 +110,8 @@
       <value>cristian.contreras@codevsys.cl</value>
     </setting>
     <setting name="DirectorioFTPCNET" serializeAs="String">
+      <!-- <value>/Users/cec/OneDrive/Comercial/Starfood</value> -->
+      <!-- <value>/Users/cec/OneDrive/Comercial/Starfood/ComercioNet_Importadora</value> -->
       <value>/Users/cec/OneDrive/Comercial/Starfood/Comercionet_distribuidora</value>
     </setting>
     <setting name="StringConexionSisPal" serializeAs="String">

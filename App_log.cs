@@ -25,6 +25,7 @@ namespace ComercioNet2Flexline
             string nombre = GetNameFile();
 
             string cadena = String.Format("[{0}] {1} - {2}{3}", DateTime.Now, level, sLog, Environment.NewLine);
+            //string cadena = String.Format("{0}{1}",sLog, Environment.NewLine);
 
             if (Transporte == "All" || Transporte == "F")
             {
@@ -42,7 +43,7 @@ namespace ComercioNet2Flexline
         #region HELPER
         private string GetNameFile()
         {
-            string nombre = "DTEComparalog_" + DateTime.Now.Year + "_" + DateTime.Now.Month + "_" + DateTime.Now.Day + ".log";
+            string nombre = "CNET2FLEXlog_" + DateTime.Now.Year + "_" + DateTime.Now.Month + "_" + DateTime.Now.Day + ".log";
             return nombre;
         }
 
