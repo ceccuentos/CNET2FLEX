@@ -168,7 +168,7 @@ namespace ComercioNet2Flexline
                 string[] filesXmlinDirCNET = Directory.GetFiles(@Params.DirectorioFTPCNET, "*.*");
                 oLog.Add("TRACE", String.Format("{0} archivos encontrados ", filesXmlinDirCNET.Count()));
                 
-                int Correlativo = 1;
+                int Correlativo = 1;  
                 foreach (string file in filesXmlinDirCNET)
                 {
                     string onlyfileName = file.Substring(Params.DirectorioFTPCNET.Length + 1).Replace(".xml", "");
@@ -191,22 +191,34 @@ namespace ComercioNet2Flexline
 
                         } else {
                             oLog.Add("ERROR", String.Format("No logró calcular o grabar XML {0} correctamente.", file));
+                              // Mover archivos a Objetados
+                                string DirProcessed = Path.Combine(@Params.DirectorioFTPCNET , "Objetados");
+                                CreateDirectory(DirProcessed);
+
+                                oLog.Add("TRACE",
+                                        String.Format("Terminado: Moviendo archivo {0} a directorio Objetados",
+                                        file.Substring(@Params.DirectorioFTPCNET.Length + 1)));
+
+                                File.Move(file, Path.Combine(DirProcessed, file.Substring(@Params.DirectorioFTPCNET.Length + 1)), true);
                         }   
                     } else {
                             oLog.Add("ERROR", String.Format("No pudo leer xml {0} ", file));
                     } 
                                         
-                }  // TODO: Agregar Clear a Listas
+                }  
+                
+                // Limpia Objs
+                 DbCtacte.Clear();
                     // Sólo recopilar Info en Tabla Dinámica
                     /*
-                    oLog.Add("HEADER", String.Format("{0} ", ToCsvHeader(DbTable[0])));
+                    oLog.Add("CECHEADER", String.Format("{0} ", ToCsvHeader(DbTable[0])));
                     foreach (var DbTable in DbTable)
                     {
                         var output1 = ToCsvRow(DbTable);
-                        oLog.Add("CEC", String.Format("{0} ", output1));
+                        oLog.Add("CECHEADER", String.Format("{0} ", output1));
                     }
                     
-                    oLog.Add("DETALLE", String.Format("{0} ", ToCsvHeader(DbDetail[0])));
+                    oLog.Add("CECDETALLE", String.Format("{0} ", ToCsvHeader(DbDetail[0])));
                     foreach (var det in DbDetail)
                     {
                         det.Observaciones = ""; 
@@ -220,6 +232,8 @@ namespace ComercioNet2Flexline
                     oLog.Add("ERROR", ex.Message);
                 }
 
+
+
         }
         static bool ReCalcAndSave(string[] ArrayFileName)
         {
@@ -230,6 +244,21 @@ namespace ComercioNet2Flexline
 
             foreach(var DbTable in DbTable.Where(x => x.CasillaEDI == ArrayFileName[0].ToString() && x.Numero == ArrayFileName[2].ToString()))
             {           
+                if (ValidaExistenciaOC(DbTable))
+                {
+                    oLog.Add("ERROR", String.Format("Documento ya existe en ERP Flexline OC {0}-{1} ", DbTable.Numero, DbTable.NombreCliente));
+                    ifError = true;
+                }
+
+                int CorrelativoFlexline = GetCorrelativo(DbTable);
+                if (CorrelativoFlexline == 0)
+                {
+                    oLog.Add("INFO", String.Format("No fue posible extraer Max(Correlativo) Gen_Flexline, se usará correlativo Default"));
+                } else 
+                {
+                    DbTable.Correlativo = CorrelativoFlexline;
+                }
+                
                 DataRowCollection RowsGets = GetCodigoProductoFlexline(DbTable);
                 if(RowsGets.Count == 0)
                 {
@@ -269,10 +298,9 @@ namespace ComercioNet2Flexline
                 }
                 
                 // Llena Observaciones y Normaliza Diferencias
-                //foreach(var DbDetail in DbDetail)
                 foreach (DocumentoD DbDetail in DbDetail.Where(x => x.Empresa == DbTable.Empresa && x.Numero == DbTable.Numero))
                 {
-                    if (DbDetail.ItemFlexlineLPCNet == null)  // TODO: Verificar vacio, Null y Empty No encuentra Item
+                    if (String.IsNullOrEmpty(DbDetail.ItemFlexlineLPCNet))  
                     {
                         DbDetail.GlosaLPCnet = DbDetail.Descripcion + " (Producto No Existe en LPCNet o no posee código Flexline)";
                         DbDetail.CantidadConvertidaFlexline = DbDetail.Cantidad;
@@ -281,20 +309,20 @@ namespace ComercioNet2Flexline
                     }
 
                     DbDetail.Observaciones = ""; 
-                    DbDetail.Observaciones += DbDetail.ItemFlexlineLPCNet == null ? "- Producto no Existe\n":"";
+                    DbDetail.Observaciones += String.IsNullOrEmpty(DbDetail.ItemFlexlineLPCNet) ? "- Producto no Existe\n":"";
                     DbDetail.Observaciones += DbDetail.UnidadContenida == 0? "- Unidad de Empaque no encontrada\n":"";
                     DbDetail.Observaciones += (DbTable.Fecha <= DbDetail.FechaInicio || DbTable.Fecha >= DbDetail.FechaFin)? "- Lista de Precios vencida\n":"";
                     DbDetail.Observaciones += DbDetail.VigenciaProductoFlexline != "S"? "- Producto no Vigente en Flexline \n":"";
                     DbDetail.Observaciones += DbDetail.PrecioConvertidoFlexline != DbDetail.PrecioFlexline? "- Precio distinto a Lista de Precios Flexline \n":"";
 
                     // Normaliza ItemFlexline sólo si no encuentra
-                    DbDetail.ItemFlexlineLPCNet = DbDetail.ItemFlexlineLPCNet == null ? "No Existe!": DbDetail.ItemFlexlineLPCNet; 
+                    DbDetail.ItemFlexlineLPCNet = String.IsNullOrEmpty(DbDetail.ItemFlexlineLPCNet) ? "No Existe!": DbDetail.ItemFlexlineLPCNet; 
 
                     // Calculo de Totales
                     DbTable.Total +=  Math.Round(DbDetail.TotalConvertidoFlexline);
 
                     //Asigna LP (Asume que todas las líneas del docto traen el mismo dato a partir de rev. de archivos 2020)
-                    DbTable.ListaPrecioCNET_ItemColor = String.IsNullOrEmpty(DbDetail.ListaPrecioFlexline)?"":DbDetail.ListaPrecioFlexline; //DbDetail.ItemColor == null ? "": DbDetail.ItemColor;
+                    DbTable.ListaPrecioCNET_ItemColor = String.IsNullOrEmpty(DbDetail.ListaPrecioFlexline)?"":DbDetail.ListaPrecioFlexline; 
 
                     // Sólo Tabla Dinámica, Quitar con refactor
                     DbDetail.Fecha = DbTable.Fecha;
@@ -318,7 +346,7 @@ namespace ComercioNet2Flexline
                 var Obser4Aprobacion = DbDetail.Where(x => x.Observaciones != "");
                 DbTable.Aprobacion = Obser4Aprobacion.Count() == 0?"S":"P";
 
-                if (!ifError)
+                if (!ifError && DbTable.DireccionDespacho != "")
                 {
                     int Resp = Program_Write(DbTable);
                     if (Resp == -1) 
@@ -329,7 +357,8 @@ namespace ComercioNet2Flexline
                 }
 
                 // Envía Email, aún si no se escribió en tablas GEN
-                SendEmail(DbTable, ifError);
+                 SendEmail(DbTable, ifError);
+
 
             }
             return !ifError;
@@ -348,19 +377,16 @@ namespace ComercioNet2Flexline
 
                 var EmpresaFlex= Params.RutSociedades.Find(p => p[3] == ArrayFileName[1]);
                 string Empresa = EmpresaFlex == null? "": EmpresaFlex[2];
-                //string Ctacte = "";
-                //string NombreCliente = "";
 
-                DataRowCollection RowsGets = GetCtacteFlexline(Empresa, ArrayFileName[0]);
+                DataRowCollection RowsGets = GetCtacteFlexline(Empresa, ArrayFileName);
                 if(RowsGets.Count == 0)
                 {
                     oLog.Add("INFO", String.Format("No encontró Ctacte en Flexline (ver AnalisisCtacte5), se utilizan datos de Configuración XML."));
                     
                     var CtacteFlex= Params.CtacteComercioNet2Flex.Find(p => p[0] == ArrayFileName[0]);
-                    //Ctacte = CtacteFlex == null? "": CtacteFlex[1];
-                    //NombreCliente = CtacteFlex == null? "": CtacteFlex[2];
-
                     CtacteFlexline xCtacte = new CtacteFlexline();
+                    xCtacte.Empresa = Empresa;
+                    xCtacte.CasillaEDI = ArrayFileName[0];
                     xCtacte.Ctacte = CtacteFlex == null? "": CtacteFlex[1];
                     xCtacte.RazonSocial =  CtacteFlex == null? "": CtacteFlex[2];
                     DbCtacte.Add(xCtacte);
@@ -369,8 +395,8 @@ namespace ComercioNet2Flexline
                 {
                     foreach(DataRow fila in RowsGets)
                         {
-                        
                             CtacteFlexline xCtacte = new CtacteFlexline();
+                            xCtacte.Empresa = Empresa;
                             xCtacte.Ctacte = fila["Ctacte"].ToString();
                             xCtacte.RazonSocial = fila["RazonSocial"].ToString();
                             xCtacte.CondPago = fila["CondPago"].ToString();
@@ -383,12 +409,6 @@ namespace ComercioNet2Flexline
                             DbCtacte.Add(xCtacte);
                         }
                 }
-
-
-
-
-                
-
                 // Caso especial
                 // =============
                 // Hay Archivos que NO traen XNamespace homogeneo en todas las ramas (a diferencia de Wallmart, quién lo hace bien)
@@ -417,7 +437,6 @@ namespace ComercioNet2Flexline
                         NombreCliente = DbCtacte[0].RazonSocial,
                         Empresa = Empresa,
                         Correlativo = Correlativo,
-                        //CondPago = CondPagoCliente,
                         Numero = ArrayFileName[2],
                         Fecha = (DateTime)el.Attribute("creationDate"),
                       
@@ -442,19 +461,22 @@ namespace ComercioNet2Flexline
                     foreach (var Encabezado in DoctoImportadora)  
                     {                        
                         oLog.Add("TRACE", String.Format("Procesa Orden {0} {1} del {2}", Encabezado.Numero, Encabezado.NombreCliente, Encabezado.Fecha));
-                        // TODO: Dirección de despacho desde Flexline
-                        // TODO: Traer GLN desde Analisis5 Flexline
                         if(RowsGets.Count == 0)
                         {
-                            //oLog.Add("INFO", String.Format("No encontró Ctacte en Flexline (ver AnalisisCtacte5), se utilizan datos de Configuración XML."));
                             var DirDespacho= Params.GLNlocacion.Find(p => p.GLNDespacho == Encabezado.GLNDireccionDespacho);
                             Encabezado.DireccionDespacho = DirDespacho == null? "": DirDespacho.Direccion + " " + DirDespacho.Comuna;
 
-                            DbCtacte[0].IdentDireccion = Encabezado.GLNDireccionDespacho;
-                            DbCtacte[0].DireccionDespacho =  DirDespacho.Direccion;
-                            DbCtacte[0].ComunaDespacho =  DirDespacho.Comuna;
+                            foreach(var DbCtacte in DbCtacte.Where(x => x.Empresa == Empresa && x.Ctacte == Encabezado.Ctacte ))
+                            {
+                                DbCtacte.IdentDireccion = Encabezado.GLNDireccionDespacho;
+                                DbCtacte.DireccionDespacho =  Encabezado.DireccionDespacho;
+                                DbCtacte.ComunaDespacho = DirDespacho == null? "": DirDespacho.Comuna;
+                                DbCtacte.CiudadDespacho = DirDespacho == null? "": DirDespacho.Comuna;
+                                break;
+                            }
 
                         } else {
+                            // Uso en SendMail
                             var DirDespacho= DbCtacte.Find(p => p.IdentDireccion == Encabezado.GLNDireccionDespacho);
                             Encabezado.DireccionDespacho = DirDespacho == null? "": DirDespacho.DireccionDespacho + " " + DirDespacho.ComunaDespacho + " " + DirDespacho.CiudadDespacho;
                         }
@@ -476,7 +498,6 @@ namespace ComercioNet2Flexline
                     select new DocumentoD {
                         Empresa = Empresa,
                         Numero = ArrayFileName[2],
-                        Correlativo = Correlativo,
 
                         Linea = (int)el.Attribute("number"),
                         Precio = (Double)el.Element(awNone + "netPrice").Element(awNone + "amount"),
@@ -639,32 +660,23 @@ namespace ComercioNet2Flexline
                     &reg; Powered by Codevsys 2020 para Starfood <br/>
                     </td>";
 
-            string Cliente;
             string EmpresaStarfood;
-            string DireccionDespacho;
-
-            var Nombre = Params.GLNlocacion.Find(z => z.GLNDespacho == DbTable.DireccionDespacho);
-            Cliente = Nombre == null? "Starfood": Nombre.Nombre;
             
             var NomStarfood = Params.RutSociedades.Find(z => z[3] == DbTable.GLNStarfood);
             EmpresaStarfood = NomStarfood == null? "Starfood": NomStarfood[1];
-
-            DireccionDespacho = DbTable.DireccionDespacho; //DirDespacho == null? "No Existe en Definición de Starfood": DirDespacho.Direccion + " " + DirDespacho.Comuna;
-            // TODO: Reemplazar variables por propiedades de clase DBTable
+            
             EncabezadoPrincipal = String.Format(EncabezadoPrincipal, 
                                 DbTable.NombreCliente, EmpresaStarfood, DbTable.Numero, DbTable.Fecha.ToString("dd-MM-yyyy"), 
                                 DbTable.Fecha.ToString("dd-MM-yyyy"), DbTable.FechaVcto.ToString("dd-MM-yyyy"), DbTable.PlazoPago + " " + DbTable.TipoPlazoPago,
-                                DireccionDespacho,
+                                DbTable.DireccionDespacho == ""? "Falta Dir. Despacho": DbTable.DireccionDespacho,
                                 DbTable.ListaPrecioCNET_ItemColor, DbTable.CondPago, 
                                 DbTable.Promocion, DbTable.NroInternoProveedor);
 
             string DetalleItemDocumento = "";
             string Obs = "";
-            Double TotalDocto = 0;
             
             foreach (DocumentoD Detail in DbDetail.Where(x => x.Empresa == DbTable.Empresa && x.Numero == DbTable.Numero))
             {                
-                TotalDocto += Detail.Total;
                 Obs += Detail.Observaciones;
 
                 DetalleItemDocumento += String.Format(DetalleItem,
@@ -679,7 +691,7 @@ namespace ComercioNet2Flexline
             DetalleItemDocumento += "</table>";
 
             Texto = String.Format(Texto, 
-                    DbTable.NombreCliente, Math.Round(TotalDocto).ToString("#,##0"));
+                    DbTable.NombreCliente, Math.Round(DbTable.Total).ToString("#,##0"));
 
             Mensaje.Body = Texto + (Obs == ""? Normal : !ifError ? Warning: ErrorEmail) 
                          +"<p>&nbsp;</p>" + EncabezadoPrincipal + "<p>&nbsp;</p>" 
@@ -695,6 +707,9 @@ namespace ComercioNet2Flexline
         }
         static public int Program_Write(Documento DbTable)
             {
+            
+                var Ctacte = DbCtacte.Find(x => x.Empresa == DbTable.Empresa && x.Ctacte == DbTable.Ctacte );
+
                 using (SqlConnection connection = new SqlConnection(Params.StringConexionFlexline))
                 {
                     string Sqltext = "";
@@ -732,7 +747,7 @@ namespace ComercioNet2Flexline
                             + " AnalisisE54, AnalisisE55, AnalisisE56, AnalisisE57, AnalisisE58, AnalisisE59, AnalisisE60 ) ";
 
                             Sqltext += "Select "
-                            + " @empresa, @tipodocto, @correlativo, '' ctacte, 0 numero, @fecha, '' proveedor, @cliente, @bodega, '' bodega2, "
+                            + " @empresa, @tipodocto, @correlativo, '' ctacte, @numero, @fecha, '' proveedor, @cliente, @bodega, '' bodega2, "
                             + " '' local, '' comprador, '00 OFICINA' vendedor, '' centrocosto, @fechavcto, @listaprecio, '' analisis, '' zona, '' tipocta, 'PS' moneda, "
                             + " 1 paridad, '' reftipodocto, 0 refcorrelativo, '' referenciaexterna, @neto, @subtotal, @total, @netoingreso, @subtotalingreso, @totalingreso, "
                             + " '' centraliza, 'S' valoriza, '' costeo, @aprobacion, '' tipocomprobante, 0 nrocomprobante, '' fechacomprobante, @periodolibro, 0 factormonto, 1 factormontoproyectado, "
@@ -754,9 +769,10 @@ namespace ComercioNet2Flexline
                             command.Parameters.Clear();
                             command.Parameters.AddWithValue("@empresa",  DbTable.Empresa);
                             command.Parameters.AddWithValue("@tipodocto", "NOTA DE VENTA");
+                            command.Parameters.AddWithValue("@numero", DbTable.Numero);   
                             command.Parameters.AddWithValue("@correlativo", DbTable.Correlativo);
                             command.Parameters.AddWithValue("@fecha", DbTable.Fecha);
-                            command.Parameters.AddWithValue("@cliente", DbTable.Ctacte);
+                            command.Parameters.AddWithValue("@cliente", Ctacte.Ctacte);
                             command.Parameters.AddWithValue("@bodega", "01 LAG SUR");
                             command.Parameters.AddWithValue("@fechavcto", DbTable.Fecha.AddDays(DbTable.DiasPagoFlexline != 0? DbTable.DiasPagoFlexline: DbTable.PlazoPago));   
                             command.Parameters.AddWithValue("@listaprecio",  DbTable.ListaPrecioCNET_ItemColor); 
@@ -772,13 +788,13 @@ namespace ComercioNet2Flexline
                             command.Parameters.AddWithValue("@aprobacion", DbTable.Aprobacion);  
                             command.Parameters.AddWithValue("@idctacte", DbTable.Ctacte);
                             command.Parameters.AddWithValue("@glosa", String.Format("OC:{0};ID:{1}",DbTable.Numero, DbTable.UniqueId) );   
-                            command.Parameters.AddWithValue("@comentario1", DbTable.Numero);  
+                            command.Parameters.AddWithValue("@comentario1", String.Format("OC:{0};FechaVcto:{1}",DbTable.Numero, DbTable.Fecha.AddDays(DbTable.DiasPagoFlexline != 0? DbTable.DiasPagoFlexline: DbTable.PlazoPago)) );  
                             command.Parameters.AddWithValue("@comentario2", DbTable.ArchivoCNet); 
                             command.Parameters.AddWithValue("@nromensaje", 29);   // TODO: Documentación Flexline dice uso futuro, se deja valor 29 que es que aparece en Documentos
 
-                            command.Parameters.AddWithValue("@direccion", DbTable.DireccionDespacho);   // TODO: 
-                            command.Parameters.AddWithValue("@ciudad", "");   // TODO: 
-                            command.Parameters.AddWithValue("@comuna", "");   // TODO: 
+                            command.Parameters.AddWithValue("@direccion", Ctacte.DireccionDespacho);   
+                            command.Parameters.AddWithValue("@ciudad", Ctacte.CiudadDespacho);   
+                            command.Parameters.AddWithValue("@comuna", Ctacte.ComunaDespacho);  
 
                             command.Parameters.AddWithValue("@hora", DateTime.Now.GetDateTimeFormats('t')[0]); 
 
@@ -856,7 +872,7 @@ namespace ComercioNet2Flexline
                                 command.Parameters.AddWithValue("@neto", DbDetail.TotalConvertidoFlexline);
                                 command.Parameters.AddWithValue("@total", DbDetail.TotalConvertidoFlexline);
                                 command.Parameters.AddWithValue("@precioajustado", DbDetail.PrecioConvertidoFlexline);
-                                command.Parameters.AddWithValue("@unidadingreso", DbDetail.UnidadFlexline == null ?"UN":DbDetail.UnidadFlexline);
+                                command.Parameters.AddWithValue("@unidadingreso", String.IsNullOrEmpty(DbDetail.UnidadFlexline) ?"UN":DbDetail.UnidadFlexline);
                                 command.Parameters.AddWithValue("@cantidadingreso", DbDetail.CantidadConvertidaFlexline);
                                 command.Parameters.AddWithValue("@precioingreso", DbDetail.PrecioConvertidoFlexline);
                                 command.Parameters.AddWithValue("@subtotalingreso", DbDetail.TotalConvertidoFlexline);
@@ -1032,12 +1048,6 @@ namespace ComercioNet2Flexline
 
                         connection.Open();
                         string SqlText = "";
-                        
-                        // "Select Isnull(Embalaje_Cod_Barras,'') Embalaje_Cod_Barras, Isnull(Producto,'') Producto, "
-                        // + "Isnull(Producto_Cod_Barras,'') Producto_Cod_Barras, Isnull(Glosa,'') Glosa " 
-                        // + "FROM SP_PRODUCTO a " 
-                        // + "Where " 
-                        // + "a.Empresa = @Empresa and a.Embalaje_Cod_Barras in ({0}) ";
 
                         SqlText = "Select Isnull(ItemUpc,'') ItemUpc, Isnull(ItemFlexline,'') Producto, "
                             + " ItemColor, Isnull(Descripcion,'') Glosa, Precio, UnidadContenedora, EDI "
@@ -1046,7 +1056,6 @@ namespace ComercioNet2Flexline
                             + " a.Empresa = @Empresa and a.ItemUpc in ({0}) ";
 
                         string Items = "";
-                        //foreach (DocumentoD Row in DbDetail)
                         foreach (DocumentoD Row in DbDetail.Where(x => x.Empresa == DbTable.Empresa && x.Numero == DbTable.Numero))
                         {
                             Items += "'" + Row.Item + "',";
@@ -1071,8 +1080,9 @@ namespace ComercioNet2Flexline
                 return null;
             }
         }
-        public static DataRowCollection GetCtacteFlexline(string Empresa, string CasillaEDI)
+        public static DataRowCollection GetCtacteFlexline(string Empresa, string[] fileArray)
         { 
+            //Verificar si existe OC con número
             try {
                 using (SqlConnection connection = new SqlConnection())
                     {
@@ -1091,7 +1101,7 @@ namespace ComercioNet2Flexline
 
                         SqlCommand ComandoSQL = new SqlCommand(SqlText, connection);
                         ComandoSQL.Parameters.AddWithValue("Empresa", Empresa);
-                        ComandoSQL.Parameters.AddWithValue("CasillaEDI", CasillaEDI);
+                        ComandoSQL.Parameters.AddWithValue("CasillaEDI", fileArray[0].ToString());
                         //ComandoSQL.Parameters.AddWithValue("DirDespacho", DbTable.GLNDireccionDespacho);
 
                         SqlDataAdapter Adapter = new SqlDataAdapter(ComandoSQL);
@@ -1105,6 +1115,78 @@ namespace ComercioNet2Flexline
             {
                 oLog.Add("ERROR", String.Format("Error al Leer Datos Ctacte en Flexline {0}", ex.Message));
                 return null;
+            }
+        }
+        public static bool ValidaExistenciaOC(Documento DbTable)
+        { 
+
+            //Verificar si existe OC con número
+            try {
+                using (SqlConnection connection = new SqlConnection())
+                    {
+                        connection.ConnectionString = Params.StringConexionFlexline;
+
+                        connection.Open();
+
+                        string SqlText = "Select 1 Row "
+                            + " FROM Documento a "
+                            + " Where "
+                            + " a.Empresa = @Empresa and (a.TipoDocto = @NV1 or a.TipoDocto = @NV2) "
+                            + " and numero = @Numero and Fecha <= Dateadd(m,-2,Getdate()) and Vigencia <> 'A' ";
+
+                        SqlCommand ComandoSQL = new SqlCommand(SqlText, connection);
+                        ComandoSQL.Parameters.AddWithValue("Empresa", DbTable.Empresa);
+                        ComandoSQL.Parameters.AddWithValue("NV1", "Nota de Venta");
+                        ComandoSQL.Parameters.AddWithValue("NV2", "Nota de Venta CNET");
+                        ComandoSQL.Parameters.AddWithValue("Numero", DbTable.Numero);
+                        
+                        SqlDataAdapter Adapter = new SqlDataAdapter(ComandoSQL);
+                        DataTable dtCommandSQL = new DataTable();
+                        Adapter.Fill(dtCommandSQL);
+
+                        return (dtCommandSQL.Rows.Count != 0) ;
+                    }
+            }
+            catch(Exception ex)
+            {
+                oLog.Add("ERROR", String.Format("Error al Leer Datos Ctacte en Flexline {0}", ex.Message));
+                return true;
+            }
+        }
+        public static int GetCorrelativo(Documento DbTable)
+        { 
+
+            //Verificar si existe OC con número
+            try {
+                using (SqlConnection connection = new SqlConnection())
+                    {
+                        connection.ConnectionString = Params.StringConexionFlexline;
+
+                        connection.Open();
+
+                        string SqlText = "Select Max(Correlativo)+1 Correlativo "
+                            + " FROM Gen_Documento a "
+                            + " Where "
+                            + " a.Empresa = @Empresa and (a.TipoDocto = @NV1 or a.TipoDocto = @NV2) ";
+
+                        SqlCommand ComandoSQL = new SqlCommand(SqlText, connection);
+                        ComandoSQL.Parameters.AddWithValue("Empresa", DbTable.Empresa);
+                        ComandoSQL.Parameters.AddWithValue("NV1", "Nota de Venta");
+                        ComandoSQL.Parameters.AddWithValue("NV2", "Nota de Venta CNET");
+                        
+                        SqlDataReader Registro = ComandoSQL.ExecuteReader();
+
+                        if (Registro.Read())
+                        {
+                            return Convert.ToInt32(Registro["Correlativo"]);
+                        } else 
+                            return 0 ;
+                    }
+            }
+            catch(Exception ex)
+            {
+                oLog.Add("ERROR", String.Format("Error al Leer Max(Correlativo) Gen_Documento en Flexline {0}", ex.Message));
+                return 0;
             }
         }
         public static DataRowCollection GetCodigoProductoFlexline(Documento DbTable)
@@ -1248,6 +1330,7 @@ namespace ComercioNet2Flexline
                 }
             }
         }
+        
         static Settings Params = new Settings();
         static App_log oLog = new App_log(AppDomain.CurrentDomain.BaseDirectory);
         static  List<Documento> DbTable = new List<Documento>();
@@ -1283,6 +1366,7 @@ namespace ComercioNet2Flexline
         public String StringConexionSisPal { get; set; }
     }
     public class CtacteFlexline {
+        public String Empresa { get; set; }
         public String Ctacte { get; set; }
         public String RazonSocial { get; set; }    
         public String CasillaEDI { get; set; }
@@ -1327,7 +1411,6 @@ namespace ComercioNet2Flexline
     public class DocumentoD
     {
         public String Empresa { get; set; }                  // DbTable.Empresa
-        public int Correlativo { get; set; }                  // Correlativo para inyección Flex
         public String Numero { get; set; }                  // DbTable.Numero
         public int Linea { get; set; }                  // lineItem/@number
         public Double Precio { get; set; }                 // PrecioXML / UnidadContenida
