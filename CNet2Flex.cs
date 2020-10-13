@@ -39,7 +39,7 @@ namespace ComercioNet2Flexline
 
                 oLog = new App_log(currentDirectory);
                 oLog.Add("DEBUG", "======== Inicio Proceso ========");
-                oLog.Add("TRACE", "Get Settings: " + settingsXMLFilepath);
+                oLog.Add("TRACE", "Lee Configuraciones: " + settingsXMLFilepath);
 
                 if (!File.Exists(settingsXMLFilepath))
                 {
@@ -144,14 +144,35 @@ namespace ComercioNet2Flexline
                     }
                 }
                 
+                // Validaciones
+                bool Valid = true;
+                if (String.IsNullOrEmpty(Params.EmailUser) || String.IsNullOrEmpty(Params.EmailTO) || String.IsNullOrEmpty(Params.SMTPName) )
+                {
+                    oLog.Add("ERROR", "Faltan datos para envío de Email (User, To, To2, Pass u otro.)");
+                    Valid = false;
+                }
                 if (Params.RutSociedades.Count == 0)
                 {
                     oLog.Add("ERROR", "Sociedades no encontradas, revise estructura XML");
+                    Valid = false;
                 }
-                else
+                if (!VerifyConnectionSQL(Params.StringConexionFlexline))
                 {
-                    oLog.Add("TRACE", "Get Settings Successed");
-
+                    oLog.Add("ERROR", "No fue posible conectar con BD.");
+                    Valid = false;
+                }
+                if (!Directory.Exists(Params.DirectorioFTPCNET)) //String.IsNullOrEmpty(Params.DirectorioFTPCNET) )
+                {
+                    oLog.Add("ERROR", "Directorio de trabajo no existe o no está definido");
+                    Valid = false;
+                }
+                if (Valid)
+                {
+                    oLog.Add("TRACE", "Configuración leída con éxito");
+                } else
+                {
+                    oLog.Add("TRACE", "Problemas con lectura de configuración");
+                    throw new System.ArgumentException("Parametros incorrectos");
                 }
             }
             catch (Exception ex)
@@ -162,14 +183,16 @@ namespace ComercioNet2Flexline
         }
         static void Main(string[] args)
         {
-         try{
+         try 
+            {
                 CNET2Flex C2F = new CNET2Flex();
                 
-                string[] filesXmlinDirCNET = Directory.GetFiles(@Params.DirectorioFTPCNET, "*.*");
+                //string[] filesXmlinDirCNET = Directory.GetFiles(@Params.DirectorioFTPCNET, "*.*");
+                IEnumerable<String> filesXmlinDirCNET = Directory.EnumerateFiles(@Params.DirectorioFTPCNET, "*.*");
                 oLog.Add("TRACE", String.Format("{0} archivos encontrados ", filesXmlinDirCNET.Count()));
                 
                 int Correlativo = 1;  
-                foreach (string file in filesXmlinDirCNET)
+                foreach (var file in filesXmlinDirCNET)
                 {
                     string onlyfileName = file.Substring(Params.DirectorioFTPCNET.Length + 1).Replace(".xml", "");
                     string[] ArrayFileName = onlyfileName.Split(".");
@@ -205,10 +228,10 @@ namespace ComercioNet2Flexline
                             oLog.Add("ERROR", String.Format("No pudo leer xml {0} ", file));
                     } 
                                         
+                    // Limpia Objs
+                    DbCtacte.Clear();
                 }  
                 
-                // Limpia Objs
-                 DbCtacte.Clear();
                     // Sólo recopilar Info en Tabla Dinámica
                     /*
                     oLog.Add("CECHEADER", String.Format("{0} ", ToCsvHeader(DbTable[0])));
@@ -357,7 +380,7 @@ namespace ComercioNet2Flexline
                 }
 
                 // Envía Email, aún si no se escribió en tablas GEN
-                 SendEmail(DbTable, ifError);
+                // SendEmail(DbTable, ifError);
 
 
             }
@@ -708,7 +731,7 @@ namespace ComercioNet2Flexline
         static public int Program_Write(Documento DbTable)
             {
             
-                var Ctacte = DbCtacte.Find(x => x.Empresa == DbTable.Empresa && x.Ctacte == DbTable.Ctacte );
+                var Ctacte = DbCtacte.Find(x => x.Empresa == DbTable.Empresa && x.Ctacte == DbTable.Ctacte && x.IdentDireccion == DbTable.GLNDireccionDespacho );
 
                 using (SqlConnection connection = new SqlConnection(Params.StringConexionFlexline))
                 {
@@ -790,7 +813,7 @@ namespace ComercioNet2Flexline
                             command.Parameters.AddWithValue("@glosa", String.Format("OC:{0};ID:{1}",DbTable.Numero, DbTable.UniqueId) );   
                             command.Parameters.AddWithValue("@comentario1", String.Format("OC:{0};FechaVcto:{1}",DbTable.Numero, DbTable.Fecha.AddDays(DbTable.DiasPagoFlexline != 0? DbTable.DiasPagoFlexline: DbTable.PlazoPago)) );  
                             command.Parameters.AddWithValue("@comentario2", DbTable.ArchivoCNet); 
-                            command.Parameters.AddWithValue("@nromensaje", 29);   // TODO: Documentación Flexline dice uso futuro, se deja valor 29 que es que aparece en Documentos
+                            command.Parameters.AddWithValue("@nromensaje", 0);   // TODO: Documentación Flexline dice uso futuro, Corresponde al correlativo interno de compras
 
                             command.Parameters.AddWithValue("@direccion", Ctacte.DireccionDespacho);   
                             command.Parameters.AddWithValue("@ciudad", Ctacte.CiudadDespacho);   
@@ -1132,7 +1155,7 @@ namespace ComercioNet2Flexline
                             + " FROM Documento a "
                             + " Where "
                             + " a.Empresa = @Empresa and (a.TipoDocto = @NV1 or a.TipoDocto = @NV2) "
-                            + " and numero = @Numero and Fecha <= Dateadd(m,-2,Getdate()) and Vigencia <> 'A' ";
+                            + " and AnalisisE5 = @Numero and Fecha <= Dateadd(m,-2,Getdate()) and Vigencia <> 'A' ";
 
                         SqlCommand ComandoSQL = new SqlCommand(SqlText, connection);
                         ComandoSQL.Parameters.AddWithValue("Empresa", DbTable.Empresa);
@@ -1255,6 +1278,22 @@ namespace ComercioNet2Flexline
             }
         }
         // Tools
+        public bool VerifyConnectionSQL(string conn)
+        {
+            string connetionString = null;
+            SqlConnection cnn;
+            connetionString = conn;
+            cnn = new SqlConnection(connetionString);
+            try
+            {
+                cnn.Open();
+                cnn.Close();
+                return true;
+            }
+            catch {
+                  return false;
+            }
+        }
         static string Right( string value, int length)
         {
             if (String.IsNullOrEmpty(value)) return string.Empty;

@@ -19,13 +19,11 @@ namespace ComercioNet2Flexline
 
         public void Add(string level, string sLog)
         {
-            //if (level == "CECHEADER" || level == "CECDETALLE") 
-            //{
+            // if (level == "CECHEADER" || level == "CECDETALLE") 
+            // {
 
             CreateDirectory();
             string nombre = GetNameFile();
-
-
 
             string cadena = String.Format("[{0}] {1} - {2}{3}", DateTime.Now, level, sLog, Environment.NewLine);
             //string cadena = String.Format("{0}{1}",sLog, Environment.NewLine);
@@ -41,7 +39,7 @@ namespace ComercioNet2Flexline
                 Console.WriteLine(cadena);
             }
 
-            //}
+            // }
         }
 
         #region HELPER
