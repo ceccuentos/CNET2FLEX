@@ -380,8 +380,7 @@ namespace ComercioNet2Flexline
                 }
 
                 // Envía Email, aún si no se escribió en tablas GEN
-                // SendEmail(DbTable, ifError);
-
+                SendEmail(DbTable, ifError);
 
             }
             return !ifError;
@@ -568,164 +567,170 @@ namespace ComercioNet2Flexline
         }
         public static void SendEmail(Documento DbTable, bool ifError) 
         {
-
-            MailMessage Mensaje = new MailMessage();
-            Mensaje.To.Add(new MailAddress(Params.EmailTO));
-            Mensaje.To.Add(new MailAddress(Params.EmailTO2));
-            Mensaje.From = new MailAddress(Params.EmailUser);
-        
-            Mensaje.IsBodyHtml = true;
-
-            Mensaje.Subject = String.Format("O/Compra {0} ComercioNet {1} - {2}", ifError?"CON ERROR":"",DbTable.Numero, DbTable.NombreCliente);
-
-            SmtpClient smtp = new SmtpClient();
-            NetworkCredential credencial = new NetworkCredential()
+            try 
             {
-                UserName = Params.EmailUser,
-                Password = Params.EmailPassword,
-            };
-
-            smtp.UseDefaultCredentials = false;
-            smtp.Credentials = credencial;
-            smtp.Host = Params.SMTPName;
-            smtp.Port = Params.SMTPPort;
-            smtp.EnableSsl = Params.EnableSSL;
-
-            string Texto = "<p>Estimado Usuario,</p>";
-            Texto += "<p>A Continuaci&oacute;n se presenta el detalle de la Orden de Compra de la empresa {0} por un total del ${1} registrada en ComercioNet.&nbsp;</p>";
-
-            string Normal = "<p><span style='color: #008000;'>El Documento no presenta diferencias y est&aacute; listo para su proceso de Integraci&oacute;n con ERP Flexline, favor proceder.</span></p>";
-            string Warning =    "<p><span style='color: #ff0000;'>*** El Documento está listo para su proceso de integraci&oacute;n, pero posee diferencias (quedar&aacute; con estado pendiente).&nbsp; Favor revisar y proceder. ***</span></p>";
-            string ErrorEmail = "<p><span style='color: #ff0000;'>*** El Documento NO PUDO SER INGRESADO. Favor revisar y contactar al Administrador si procede. ***</span></p>";
-
-            string EncabezadoPrincipal = "";
-            EncabezadoPrincipal += "<table style='border-collapse:collapse;border-spacing:0' class='tg'>";
-            EncabezadoPrincipal += "<tbody>";
-            EncabezadoPrincipal += "<tr>";
-            EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:bold;text-decoration:none'>Emisor:</span></td>";
-            EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'>{0}</td>";
-            EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:bold;text-decoration:none'>Receptor:</span></td>";
-            EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'>{1}</td>";
-            EncabezadoPrincipal += "</tr>";
-            EncabezadoPrincipal += "<tr>";
-            EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Número O/C:</span></td>";
-            EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{2}</span></td>";
-            EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Fecha generación Mensaje:</span></td>";
-            EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{3}</span></td>";
-            EncabezadoPrincipal += "</tr>";
-            EncabezadoPrincipal += "<tr>";
-            EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Fecha de Embarque:</span></td>";
-            EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='text-decoration:none'>{4}</span></td>";
-            EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Fecha de Cancelacion:</span></td>";
-            EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='text-decoration:none'>{5}</span></td>";
-            EncabezadoPrincipal += "</tr>";
-            EncabezadoPrincipal += "<tr>";
-            EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Condiciones de Pago:</span></td>";
-            EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{6}</span></td>";
-            EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Lugar de Entrega:</span></td>";
-            EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{7}</span></td>";
-            EncabezadoPrincipal += "</tr>";
-
-            EncabezadoPrincipal += "<tr>";
-            EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Lista Precios ERP:</span></td>";
-            EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='text-decoration:none'>{8}</span></td>";
-            EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>CondPago ERP:</span></td>";
-            EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='text-decoration:none'>{9}</span></td>";
-            EncabezadoPrincipal += "</tr>";
-            EncabezadoPrincipal += "<tr>";
-            EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Promoción:</span></td>";
-            EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{10}</span></td>";
-            EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Num. Proveedor:</span></td>";
-            EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{11}</span></td>";
-            EncabezadoPrincipal += "</tr>";
-
-            EncabezadoPrincipal += "</tbody>";
-            EncabezadoPrincipal += "</table>";
+                MailMessage Mensaje = new MailMessage();
+                Mensaje.To.Add(new MailAddress(Params.EmailTO));
+                Mensaje.To.Add(new MailAddress(Params.EmailTO2));
+                Mensaje.From = new MailAddress(Params.EmailUser);
         
-            string DetalleHead = "";    
-            DetalleHead += "<table style='border-collapse:collapse;border-spacing:0' class='tg'>";
-            DetalleHead += "    <thead>";
-            DetalleHead += "        <tr>";
-            DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Linea</span></th>";
-            DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:bold;text-decoration:none'>Cod. UPC</span></th>";
-            DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>ITEM-Flexline</span></th>";
-            DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Descripción</span></th>";
-            DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Talla/UM</span></th>";
-            DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Color/Desc</span></th>";
-            DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:bold;text-decoration:none'>Cantidad</span></th>";
-            DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Precio Unit.</span></th>";
-            DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Unid/Emp.</span></th>";
-            DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Empaques</span></th>";
-            DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:bold'>Total</span></th>";
-            DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:bold'>Observaciones</span></th>";
-            DetalleHead += "        </tr>";
-            DetalleHead += "    </thead>";
-            DetalleHead += "    <tbody>";
+                Mensaje.IsBodyHtml = true;
 
-            string DetalleItem = "";    
-            DetalleItem += "        <tr>";
-            DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'>{0}</td>";
-            DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{1}</span></td>";
-            DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{2}</span></td>";
-            DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='text-decoration:none'>{3}</span></td>";
-            DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='text-decoration:none'>{4}</span></td>";
-            DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{5}</span></td>";
-            DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{6}</span></td>";
-            DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{7}</span></td>";
-            DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{8}</span></td>";
-            DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'>{9}</td>";
-            DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'>{10}</td>";
-            DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:left;vertical-align:top;word-break:normal;color:red'>{11}</td>";
-            DetalleItem += "        </tr>";
+                Mensaje.Subject = String.Format("O/Compra {0} ComercioNet {1} - {2}", ifError?"CON ERROR":"",DbTable.Numero, DbTable.NombreCliente);
 
-            string footerTabla = @"
-                    <td style='color: #ffffff; font-family: Arial, sans-serif; font-size: 10px;'>
-                    &reg; Powered by Codevsys 2020 para Starfood <br/>
-                    </td>";
+                SmtpClient smtp = new SmtpClient();
+                NetworkCredential credencial = new NetworkCredential()
+                {
+                    UserName = Params.EmailUser,
+                    Password = Params.EmailPassword,
+                };
 
-            string EmpresaStarfood;
+                smtp.UseDefaultCredentials = false;
+                smtp.Credentials = credencial;
+                smtp.Host = Params.SMTPName;
+                smtp.Port = Params.SMTPPort;
+                smtp.EnableSsl = Params.EnableSSL;
+
+                string Texto = "<p>Estimado Usuario,</p>";
+                Texto += "<p>A Continuaci&oacute;n se presenta el detalle de la Orden de Compra de la empresa {0} por un total del ${1} registrada en ComercioNet.&nbsp;</p>";
+
+                string Normal = "<p><span style='color: #008000;'>El Documento no presenta diferencias y est&aacute; listo para su proceso de Integraci&oacute;n con ERP Flexline, favor proceder.</span></p>";
+                string Warning =    "<p><span style='color: #ff0000;'>*** El Documento está listo para su proceso de integraci&oacute;n, pero posee diferencias (quedar&aacute; con estado pendiente).&nbsp; Favor revisar y proceder. ***</span></p>";
+                string ErrorEmail = "<p><span style='color: #ff0000;'>*** El Documento NO PUDO SER INGRESADO. Favor revisar y contactar al Administrador si procede. ***</span></p>";
+
+                string EncabezadoPrincipal = "";
+                EncabezadoPrincipal += "<table style='border-collapse:collapse;border-spacing:0' class='tg'>";
+                EncabezadoPrincipal += "<tbody>";
+                EncabezadoPrincipal += "<tr>";
+                EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:bold;text-decoration:none'>Emisor:</span></td>";
+                EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'>{0}</td>";
+                EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:bold;text-decoration:none'>Receptor:</span></td>";
+                EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'>{1}</td>";
+                EncabezadoPrincipal += "</tr>";
+                EncabezadoPrincipal += "<tr>";
+                EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Número O/C:</span></td>";
+                EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{2}</span></td>";
+                EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Fecha generación Mensaje:</span></td>";
+                EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{3}</span></td>";
+                EncabezadoPrincipal += "</tr>";
+                EncabezadoPrincipal += "<tr>";
+                EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Fecha de Embarque:</span></td>";
+                EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='text-decoration:none'>{4}</span></td>";
+                EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Fecha de Cancelacion:</span></td>";
+                EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='text-decoration:none'>{5}</span></td>";
+                EncabezadoPrincipal += "</tr>";
+                EncabezadoPrincipal += "<tr>";
+                EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Condiciones de Pago:</span></td>";
+                EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{6}</span></td>";
+                EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Lugar de Entrega:</span></td>";
+                EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{7}</span></td>";
+                EncabezadoPrincipal += "</tr>";
+
+                EncabezadoPrincipal += "<tr>";
+                EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Lista Precios ERP:</span></td>";
+                EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='text-decoration:none'>{8}</span></td>";
+                EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>CondPago ERP:</span></td>";
+                EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='text-decoration:none'>{9}</span></td>";
+                EncabezadoPrincipal += "</tr>";
+                EncabezadoPrincipal += "<tr>";
+                EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Promoción:</span></td>";
+                EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{10}</span></td>";
+                EncabezadoPrincipal += "<td style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Num. Proveedor:</span></td>";
+                EncabezadoPrincipal += "<td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;overflow:hidden;padding:10px 5px;text-align:left;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{11}</span></td>";
+                EncabezadoPrincipal += "</tr>";
+
+                EncabezadoPrincipal += "</tbody>";
+                EncabezadoPrincipal += "</table>";
+        
+                string DetalleHead = "";    
+                DetalleHead += "<table style='border-collapse:collapse;border-spacing:0' class='tg'>";
+                DetalleHead += "    <thead>";
+                DetalleHead += "        <tr>";
+                DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Linea</span></th>";
+                DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:bold;text-decoration:none'>Cod. UPC</span></th>";
+                DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>ITEM-Flexline</span></th>";
+                DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Descripción</span></th>";
+                DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Talla/UM</span></th>";
+                DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Color/Desc</span></th>";
+                DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:bold;text-decoration:none'>Cantidad</span></th>";
+                DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Precio Unit.</span></th>";
+                DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Unid/Emp.</span></th>";
+                DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Empaques</span></th>";
+                DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:bold'>Total</span></th>";
+                DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:bold'>Observaciones</span></th>";
+                DetalleHead += "        </tr>";
+                DetalleHead += "    </thead>";
+                DetalleHead += "    <tbody>";
+
+                string DetalleItem = "";    
+                DetalleItem += "        <tr>";
+                DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'>{0}</td>";
+                DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{1}</span></td>";
+                DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{2}</span></td>";
+                DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='text-decoration:none'>{3}</span></td>";
+                DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='text-decoration:none'>{4}</span></td>";
+                DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{5}</span></td>";
+                DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{6}</span></td>";
+                DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{7}</span></td>";
+                DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{8}</span></td>";
+                DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'>{9}</td>";
+                DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'>{10}</td>";
+                DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:left;vertical-align:top;word-break:normal;color:red'>{11}</td>";
+                DetalleItem += "        </tr>";
+
+                string footerTabla = @"
+                        <td style='color: #ffffff; font-family: Arial, sans-serif; font-size: 10px;'>
+                        &reg; Powered by Codevsys 2020 para Starfood <br/>
+                        </td>";
+
+                string EmpresaStarfood;
             
-            var NomStarfood = Params.RutSociedades.Find(z => z[3] == DbTable.GLNStarfood);
-            EmpresaStarfood = NomStarfood == null? "Starfood": NomStarfood[1];
+                var NomStarfood = Params.RutSociedades.Find(z => z[3] == DbTable.GLNStarfood);
+                EmpresaStarfood = NomStarfood == null? "Starfood": NomStarfood[1];
             
-            EncabezadoPrincipal = String.Format(EncabezadoPrincipal, 
-                                DbTable.NombreCliente, EmpresaStarfood, DbTable.Numero, DbTable.Fecha.ToString("dd-MM-yyyy"), 
-                                DbTable.Fecha.ToString("dd-MM-yyyy"), DbTable.FechaVcto.ToString("dd-MM-yyyy"), DbTable.PlazoPago + " " + DbTable.TipoPlazoPago,
-                                DbTable.DireccionDespacho == ""? "Falta Dir. Despacho": DbTable.DireccionDespacho,
-                                DbTable.ListaPrecioCNET_ItemColor, DbTable.CondPago, 
-                                DbTable.Promocion, DbTable.NroInternoProveedor);
+                EncabezadoPrincipal = String.Format(EncabezadoPrincipal, 
+                                    DbTable.NombreCliente, EmpresaStarfood, DbTable.Numero, DbTable.Fecha.ToString("dd-MM-yyyy"), 
+                                    DbTable.Fecha.ToString("dd-MM-yyyy"), DbTable.FechaVcto.ToString("dd-MM-yyyy"), DbTable.PlazoPago + " " + DbTable.TipoPlazoPago,
+                                    DbTable.DireccionDespacho == ""? "Falta Dir. Despacho": DbTable.DireccionDespacho,
+                                    DbTable.ListaPrecioCNET_ItemColor, DbTable.CondPago, 
+                                    DbTable.Promocion, DbTable.NroInternoProveedor);
 
-            string DetalleItemDocumento = "";
-            string Obs = "";
+                string DetalleItemDocumento = "";
+                string Obs = "";
             
-            foreach (DocumentoD Detail in DbDetail.Where(x => x.Empresa == DbTable.Empresa && x.Numero == DbTable.Numero))
-            {                
-                Obs += Detail.Observaciones;
+                foreach (DocumentoD Detail in DbDetail.Where(x => x.Empresa == DbTable.Empresa && x.Numero == DbTable.Numero))
+                {                
+                    Obs += Detail.Observaciones;
 
-                DetalleItemDocumento += String.Format(DetalleItem,
-                    Detail.Linea, Detail.Item, Detail.ItemFlexlineLPCNet, Detail.GlosaLPCnet, Detail.ItemSize,
-                    Detail.ItemColor, Detail.CantidadConvertidaFlexline, Detail.PrecioConvertidoFlexline.ToString("#,##0"), Detail.UnidadContenida,
-                    Detail.Cantidad.ToString("#,##0.00") , Detail.TotalConvertidoFlexline.ToString("#,##0"), Detail.Observaciones.Replace("\n","<br>")
-                    );
+                    DetalleItemDocumento += String.Format(DetalleItem,
+                        Detail.Linea, Detail.Item, Detail.ItemFlexlineLPCNet, Detail.GlosaLPCnet, Detail.ItemSize,
+                        Detail.ItemColor, Detail.CantidadConvertidaFlexline, Detail.PrecioConvertidoFlexline.ToString("#,##0"), Detail.UnidadContenida,
+                        Detail.Cantidad.ToString("#,##0.00") , Detail.TotalConvertidoFlexline.ToString("#,##0"), Detail.Observaciones.Replace("\n","<br>")
+                        );
                 
+                }
+
+                DetalleItemDocumento += "        </tbody>";
+                DetalleItemDocumento += "</table>";
+
+                Texto = String.Format(Texto, 
+                        DbTable.NombreCliente, Math.Round(DbTable.Total).ToString("#,##0"));
+
+                Mensaje.Body = Texto + (Obs == ""? Normal : !ifError ? Warning: ErrorEmail) 
+                             +"<p>&nbsp;</p>" + EncabezadoPrincipal + "<p>&nbsp;</p>" 
+                             + DetalleHead + DetalleItemDocumento 
+                             + footerTabla;
+                
+                smtp.Send(Mensaje);
+
+
+                oLog.Add("INFO", String.Format("Email enviado con OC {0}", DbTable.Numero));
+
             }
+            catch {
+                   oLog.Add("ERROR", String.Format("No puedo enviar Email con OC {0}", DbTable.Numero));
 
-            DetalleItemDocumento += "        </tbody>";
-            DetalleItemDocumento += "</table>";
-
-            Texto = String.Format(Texto, 
-                    DbTable.NombreCliente, Math.Round(DbTable.Total).ToString("#,##0"));
-
-            Mensaje.Body = Texto + (Obs == ""? Normal : !ifError ? Warning: ErrorEmail) 
-                         +"<p>&nbsp;</p>" + EncabezadoPrincipal + "<p>&nbsp;</p>" 
-                         + DetalleHead + DetalleItemDocumento 
-                         + footerTabla;
-                
-            smtp.Send(Mensaje);
-
-            oLog.Add("INFO", String.Format("Email enviado con OC {0}", DbTable.Numero));
-
-
+            }
 
         }
         static public int Program_Write(Documento DbTable)
@@ -791,7 +796,7 @@ namespace ComercioNet2Flexline
                             command.CommandText = Sqltext;
                             command.Parameters.Clear();
                             command.Parameters.AddWithValue("@empresa",  DbTable.Empresa);
-                            command.Parameters.AddWithValue("@tipodocto", "NOTA DE VENTA");
+                            command.Parameters.AddWithValue("@tipodocto", "NOTA VENTA CNET");
                             command.Parameters.AddWithValue("@numero", DbTable.Numero);   
                             command.Parameters.AddWithValue("@correlativo", DbTable.Correlativo);
                             command.Parameters.AddWithValue("@fecha", DbTable.Fecha);
@@ -883,7 +888,7 @@ namespace ComercioNet2Flexline
                                 
                                 command.Parameters.Clear();
                                 command.Parameters.AddWithValue("@empresa",  DbTable.Empresa);
-                                command.Parameters.AddWithValue("@tipodocto", "NOTA DE VENTA");
+                                command.Parameters.AddWithValue("@tipodocto", "NOTA VENTA CNET");
                                 command.Parameters.AddWithValue("@correlativo", DbTable.Correlativo);
                                 command.Parameters.AddWithValue("@secuencia", Linea);
                                 command.Parameters.AddWithValue("@linea", Linea);
@@ -917,7 +922,7 @@ namespace ComercioNet2Flexline
 
                                 command.Parameters.AddWithValue("@preciolistap", DbDetail.PrecioFlexline);
 
-                                command.Parameters.AddWithValue("@unimeddynamic", 0);
+                                command.Parameters.AddWithValue("@unimeddynamic", DbDetail.CantidadConvertidaFlexline);
                                 command.Parameters.AddWithValue("@origencodigo", DbDetail.ItemFlexlineLPCNet);
 
                                 Rows = command.ExecuteNonQuery();
@@ -942,7 +947,7 @@ namespace ComercioNet2Flexline
                             command.CommandText = Sqltext;
                             command.Parameters.Clear();
                             command.Parameters.AddWithValue("@empresa",  DbTable.Empresa);
-                            command.Parameters.AddWithValue("@tipodocto", "NOTA DE VENTA");
+                            command.Parameters.AddWithValue("@tipodocto", "NOTA VENTA CNET");
                             command.Parameters.AddWithValue("@correlativo", DbTable.Correlativo);
 
                             command.Parameters.AddWithValue("@codigopago", DbTable.CondPago);
@@ -950,7 +955,7 @@ namespace ComercioNet2Flexline
                             command.Parameters.AddWithValue("@monto", Math.Round(DbTable.Total * (DbTable.Iva/100+1)));   
                             command.Parameters.AddWithValue("@montoingreso", Math.Round(DbTable.Total * (DbTable.Iva/100+1)));   
                             
-                            command.Parameters.AddWithValue("@tipodoctopago", "NOTA DE VENTA");
+                            command.Parameters.AddWithValue("@tipodoctopago", "NOTA VENTA CNET");
                             command.Parameters.AddWithValue("@nrodoctopago", DbTable.Numero);
                             command.Parameters.AddWithValue("@montobimoneda", Math.Round(DbTable.Total * (DbTable.Iva/100+1)));   
                             command.Parameters.AddWithValue("@fechavctodocto", DbTable.Fecha.AddDays(DbTable.PlazoPago));
@@ -976,7 +981,7 @@ namespace ComercioNet2Flexline
                             {
                                 command.Parameters.Clear();
                                 command.Parameters.AddWithValue("@empresa",  DbTable.Empresa);
-                                command.Parameters.AddWithValue("@tipodocto", "NOTA DE VENTA");
+                                command.Parameters.AddWithValue("@tipodocto", "NOTA VENTA CNET");
                                 command.Parameters.AddWithValue("@correlativo", DbTable.Correlativo);
                                 command.Parameters.AddWithValue("@orden", i);
 
@@ -985,9 +990,9 @@ namespace ComercioNet2Flexline
                                     case 1:
                                         command.Parameters.AddWithValue("@nombre", "Neto");
                                         command.Parameters.AddWithValue("@factor", 0);
-                                        command.Parameters.AddWithValue("@monto", Math.Round(DbTable.Total * (DbTable.Iva/100+1)));
-                                        command.Parameters.AddWithValue("@montoingreso", Math.Round(DbTable.Total * (DbTable.Iva/100+1))); 
-                                        command.Parameters.AddWithValue("@montobimoneda", Math.Round(DbTable.Total * (DbTable.Iva/100+1))); 
+                                        command.Parameters.AddWithValue("@monto", Math.Round(DbTable.Total));
+                                        command.Parameters.AddWithValue("@montoingreso", Math.Round(DbTable.Total)); 
+                                        command.Parameters.AddWithValue("@montobimoneda", Math.Round(DbTable.Total)); 
                                         break;
                                     case 2:
                                         command.Parameters.AddWithValue("@nombre", "Descto");
@@ -999,9 +1004,9 @@ namespace ComercioNet2Flexline
                                     case 3:
                                         command.Parameters.AddWithValue("@nombre", "SubTot");
                                         command.Parameters.AddWithValue("@factor", 0);
-                                        command.Parameters.AddWithValue("@monto", Math.Round(DbTable.Total * (DbTable.Iva/100+1))); 
-                                        command.Parameters.AddWithValue("@montoingreso", Math.Round(DbTable.Total * (DbTable.Iva/100+1))); 
-                                        command.Parameters.AddWithValue("@montobimoneda", Math.Round(DbTable.Total * (DbTable.Iva/100+1))); 
+                                        command.Parameters.AddWithValue("@monto", Math.Round(DbTable.Total)); 
+                                        command.Parameters.AddWithValue("@montoingreso", Math.Round(DbTable.Total)); 
+                                        command.Parameters.AddWithValue("@montobimoneda", Math.Round(DbTable.Total)); 
                                         break;
                                     case 4:
                                         command.Parameters.AddWithValue("@nombre", "DsctoPorcent");
@@ -1020,9 +1025,9 @@ namespace ComercioNet2Flexline
                                     case 6:
                                         command.Parameters.AddWithValue("@nombre", "Afecto");
                                         command.Parameters.AddWithValue("@factor", 0);
-                                        command.Parameters.AddWithValue("@monto", Math.Round(DbTable.Total * (DbTable.Iva/100+1))); 
-                                        command.Parameters.AddWithValue("@montoingreso", Math.Round(DbTable.Total * (DbTable.Iva/100+1))); 
-                                        command.Parameters.AddWithValue("@montobimoneda", Math.Round(DbTable.Total * (DbTable.Iva/100+1))); 
+                                        command.Parameters.AddWithValue("@monto", Math.Round(DbTable.Total)); 
+                                        command.Parameters.AddWithValue("@montoingreso", Math.Round(DbTable.Total)); 
+                                        command.Parameters.AddWithValue("@montobimoneda", Math.Round(DbTable.Total)); 
                                         break;
                                     default:
                                         command.Parameters.AddWithValue("@nombre", "IVA");
@@ -1159,8 +1164,8 @@ namespace ComercioNet2Flexline
 
                         SqlCommand ComandoSQL = new SqlCommand(SqlText, connection);
                         ComandoSQL.Parameters.AddWithValue("Empresa", DbTable.Empresa);
-                        ComandoSQL.Parameters.AddWithValue("NV1", "Nota de Venta");
-                        ComandoSQL.Parameters.AddWithValue("NV2", "Nota de Venta CNET");
+                        ComandoSQL.Parameters.AddWithValue("NV1", "Nota de Ventax");
+                        ComandoSQL.Parameters.AddWithValue("NV2", "Nota Venta CNET");
                         ComandoSQL.Parameters.AddWithValue("Numero", DbTable.Numero);
                         
                         SqlDataAdapter Adapter = new SqlDataAdapter(ComandoSQL);
@@ -1178,7 +1183,7 @@ namespace ComercioNet2Flexline
         }
         public static int GetCorrelativo(Documento DbTable)
         { 
-
+            
             //Verificar si existe OC con número
             try {
                 using (SqlConnection connection = new SqlConnection())
@@ -1187,15 +1192,15 @@ namespace ComercioNet2Flexline
 
                         connection.Open();
 
-                        string SqlText = "Select Max(Correlativo)+1 Correlativo "
+                        string SqlText = "Select isnull(Max(Correlativo),0)+1 Correlativo "
                             + " FROM Gen_Documento a "
                             + " Where "
                             + " a.Empresa = @Empresa and (a.TipoDocto = @NV1 or a.TipoDocto = @NV2) ";
 
                         SqlCommand ComandoSQL = new SqlCommand(SqlText, connection);
                         ComandoSQL.Parameters.AddWithValue("Empresa", DbTable.Empresa);
-                        ComandoSQL.Parameters.AddWithValue("NV1", "Nota de Venta");
-                        ComandoSQL.Parameters.AddWithValue("NV2", "Nota de Venta CNET");
+                        ComandoSQL.Parameters.AddWithValue("NV1", "Nota de Ventax");
+                        ComandoSQL.Parameters.AddWithValue("NV2", "Nota Venta CNET");
                         
                         SqlDataReader Registro = ComandoSQL.ExecuteReader();
 
