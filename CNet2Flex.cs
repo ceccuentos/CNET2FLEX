@@ -8,6 +8,7 @@ using System.Net.Mail;
 using System.Xml.Linq;
 using System.Data.SqlClient;
 using System.Reflection;
+using System.Xml;
 
 namespace ComercioNet2Flexline
 {
@@ -34,8 +35,8 @@ namespace ComercioNet2Flexline
                 Params.CtacteComercioNet2Flex = new List<string[]>();
 
                 var filenameXMLSettings = "CNET2FLEX_Config.xml";
-                var currentDirectory = AppDomain.CurrentDomain.BaseDirectory;
-                var settingsXMLFilepath = Path.Combine(currentDirectory, filenameXMLSettings);
+                var currentDirectory = Path.Combine(@AppDomain.CurrentDomain.BaseDirectory, "Logs");
+                var settingsXMLFilepath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, filenameXMLSettings);
 
                 oLog = new App_log(currentDirectory);
                 oLog.Add("DEBUG", "======== Inicio Proceso ========");
@@ -187,7 +188,6 @@ namespace ComercioNet2Flexline
             {
                 CNET2Flex C2F = new CNET2Flex();
                 
-                //string[] filesXmlinDirCNET = Directory.GetFiles(@Params.DirectorioFTPCNET, "*.*");
                 IEnumerable<String> filesXmlinDirCNET = Directory.EnumerateFiles(@Params.DirectorioFTPCNET, "*.*");
                 oLog.Add("TRACE", String.Format("{0} archivos encontrados ", filesXmlinDirCNET.Count()));
                 
@@ -197,39 +197,32 @@ namespace ComercioNet2Flexline
                     string onlyfileName = file.Substring(Params.DirectorioFTPCNET.Length + 1).Replace(".xml", "");
                     string[] ArrayFileName = onlyfileName.Split(".");
 
-                    if (ReadFileCNET(file, Correlativo))
+                    if (isFileXML(file))
                     {
-                        if(ReCalcAndSave(ArrayFileName))
+                        if (ReadFileCNET(file, Correlativo))
                         {
+                            if(ReCalcAndSave(ArrayFileName))
+                            {
                                 Correlativo ++;
                                 // Mover archivos
-                                string DirProcessed = Path.Combine(@Params.DirectorioFTPCNET , "Procesados");
-                                CreateDirectory(DirProcessed);
-
-                                oLog.Add("TRACE",
-                                        String.Format("Terminado: Moviendo archivo {0} a directorio procesados",
-                                        file.Substring(@Params.DirectorioFTPCNET.Length + 1)));
-
-                                File.Move(file, Path.Combine(DirProcessed, file.Substring(@Params.DirectorioFTPCNET.Length + 1)), true);
-
+                                MoveFile2Dir(file, "Procesados");
+                            } else {
+                                oLog.Add("ERROR", String.Format("No logró calcular o grabar XML {0} correctamente.", file));
+                                // Mover archivos a Objetados
+                                MoveFile2Dir(file, "Objetados");
+                            }   
                         } else {
-                            oLog.Add("ERROR", String.Format("No logró calcular o grabar XML {0} correctamente.", file));
-                              // Mover archivos a Objetados
-                                string DirProcessed = Path.Combine(@Params.DirectorioFTPCNET , "Objetados");
-                                CreateDirectory(DirProcessed);
-
-                                oLog.Add("TRACE",
-                                        String.Format("Terminado: Moviendo archivo {0} a directorio Objetados",
-                                        file.Substring(@Params.DirectorioFTPCNET.Length + 1)));
-
-                                File.Move(file, Path.Combine(DirProcessed, file.Substring(@Params.DirectorioFTPCNET.Length + 1)), true);
-                        }   
-                    } else {
-                            oLog.Add("ERROR", String.Format("No pudo leer xml {0} ", file));
-                    } 
+                                oLog.Add("ERROR", String.Format("No pudo leer xml {0} ", file));
+                                // Mover archivos a Objetados
+                                MoveFile2Dir(file, "Objetados");
+                        } 
                                         
-                    // Limpia Objs
-                    DbCtacte.Clear();
+                        // Limpia Objs
+                        DbCtacte.Clear();
+                    } else {
+                        oLog.Add("INFO", String.Format("Ignora archivo (no es xml) {0} ", file));
+                    }
+                    
                 }  
                 
                     // Sólo recopilar Info en Tabla Dinámica
@@ -369,6 +362,9 @@ namespace ComercioNet2Flexline
                 var Obser4Aprobacion = DbDetail.Where(x => x.Observaciones != "");
                 DbTable.Aprobacion = Obser4Aprobacion.Count() == 0?"S":"P";
 
+                // Si trae Observaciones no graba archivos y mueve a objetados
+                ifError = Obser4Aprobacion.Count() != 0;
+
                 if (!ifError && DbTable.DireccionDespacho != "")
                 {
                     int Resp = Program_Write(DbTable);
@@ -383,7 +379,7 @@ namespace ComercioNet2Flexline
                 SendEmail(DbTable, ifError);
 
             }
-            return !ifError;
+            return !ifError;   // Lógica inversa para controlar mov. a Objetados
         }
         static bool ReadFileCNET(string filename, int Correlativo)
         {
@@ -560,7 +556,7 @@ namespace ComercioNet2Flexline
             catch (Exception ex)
             {
                 oLog.Add("ERROR",
-                    String.Format("Error al obtener DTE's en {0}", ex.Message));
+                    String.Format("Error al obtener OC's {0}", ex.Message));
                 return false;
             }
 
@@ -1130,7 +1126,6 @@ namespace ComercioNet2Flexline
                         SqlCommand ComandoSQL = new SqlCommand(SqlText, connection);
                         ComandoSQL.Parameters.AddWithValue("Empresa", Empresa);
                         ComandoSQL.Parameters.AddWithValue("CasillaEDI", fileArray[0].ToString());
-                        //ComandoSQL.Parameters.AddWithValue("DirDespacho", DbTable.GLNDireccionDespacho);
 
                         SqlDataAdapter Adapter = new SqlDataAdapter(ComandoSQL);
                         DataTable dtCommandSQL = new DataTable();
@@ -1283,6 +1278,32 @@ namespace ComercioNet2Flexline
             }
         }
         // Tools
+        public static bool isFileXML(string file)
+        {
+            try
+            {
+                using (XmlTextReader reader = new XmlTextReader(file))
+                    {
+                    return reader.Read();
+                    }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public static void MoveFile2Dir(string file, string directorio)
+        {
+            string DirProcessed = Path.Combine(@Params.DirectorioFTPCNET , directorio);
+            CreateDirectory(DirProcessed);
+
+            oLog.Add("TRACE",
+                    String.Format("Terminado: Moviendo archivo {0} a directorio {1}",
+                    file.Substring(@Params.DirectorioFTPCNET.Length + 1), directorio));
+
+            File.Move(file, Path.Combine(DirProcessed, file.Substring(@Params.DirectorioFTPCNET.Length + 1)), true);
+        }
         public bool VerifyConnectionSQL(string conn)
         {
             string connetionString = null;
