@@ -111,8 +111,8 @@
     </setting>
     <setting name="DirectorioFTPCNET" serializeAs="String">
       <!-- <value>/Users/cec/OneDrive/Comercial/Starfood</value> -->
-      <value>/Users/cec/OneDrive/Comercial/Starfood/ComercioNet_Importadora</value>
-      <!-- <value>/Users/cec/OneDrive/Comercial/Starfood/Comercionet_distribuidora</value> -->
+      <!-- <value>/Users/cec/OneDrive/Comercial/Starfood/ComercioNet_Importadora</value> -->
+      <value>/Users/cec/OneDrive/Comercial/Starfood/Comercionet_distribuidora</value>
     </setting>
     <setting name="StringConexionSisPal" serializeAs="String">
       <value>Data Source=Localhost;Initial Catalog=BdFlexline;user Id=sa;password=27Asimov2020</value>

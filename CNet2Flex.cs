@@ -226,7 +226,30 @@ namespace ComercioNet2Flexline
                 }  
                 
                     // Sólo recopilar Info en Tabla Dinámica
-                    /*
+                    foreach (var DbTable in DbTable)
+                    {
+                        foreach (var DbDetail in DbDetail.Where(x => x.Empresa == DbTable.Empresa && x.Numero == DbTable.Numero ))
+                        {
+                             // Sólo Tabla Dinámica, Quitar con refactor
+                            DbDetail.Fecha = DbTable.Fecha;
+                            DbDetail.Ctacte = DbTable.Ctacte;
+                            DbDetail.NombreCliente = DbTable.NombreCliente;
+                            DbDetail.CondPago = DbTable.CondPago;
+                            DbDetail.CasillaEDI = DbTable.CasillaEDI;
+                            DbDetail.TipoPlazoPago = DbTable.TipoPlazoPago;
+                            DbDetail.PlazoPago = DbTable.PlazoPago;
+                            DbDetail.TipoOC = DbTable.TipoOC;
+                            DbDetail.NroInternoProveedor = DbTable.NroInternoProveedor;
+                            DbDetail.GLNDireccionDespacho = DbTable.GLNDireccionDespacho;
+                            DbDetail.DireccionDespacho = DbTable.DireccionDespacho;
+                            DbDetail.FechaVcto = DbTable.FechaVcto;
+                            DbDetail.GLNComprador = DbTable.GLNComprador;
+                            DbDetail.UniqueId = DbTable.UniqueId;
+                            DbDetail.SalesDepartament = DbTable.SalesDepartament;
+                            DbDetail.Proceso = DbTable.Proceso;
+                        }
+                    }
+                    
                     oLog.Add("CECHEADER", String.Format("{0} ", ToCsvHeader(DbTable[0])));
                     foreach (var DbTable in DbTable)
                     {
@@ -241,7 +264,7 @@ namespace ComercioNet2Flexline
                         var output1 = ToCsvRow(det);
                         oLog.Add("CECDETALLE", String.Format("{0} ", output1));
                     }
-                    */
+                    
                 }
                 catch (Exception ex)
                 {
@@ -285,14 +308,14 @@ namespace ComercioNet2Flexline
                 foreach(DataRow fila in RowsGets)
                 {
                     DbTable.Iva = Convert.ToDouble(fila["Iva"]);
-                    DbTable.CondPago = fila["CondPago"].ToString();
-                    DbTable.DiasPagoFlexline = Convert.ToInt32(fila["DiasPago"]);
-                    
-                    foreach(var DbDetail in DbDetail.Where(x => x.Item == fila["ItemUpc"].ToString()))
+                    DbTable.CondPago = fila["CondPagoCnet"].ToString() == "" ? fila["CondPago"].ToString(): fila["CondPagoCnet"].ToString();
+                    DbTable.DiasPagoFlexline = fila["CondPagoCnet"].ToString() == "" ? Convert.ToInt32(fila["DiasPago"]) : DbTable.PlazoPago;
+
+                    foreach (var DbDetail in DbDetail.Where(x => x.Empresa == DbTable.Empresa && x.Numero == DbTable.Numero && x.Item == fila["ItemUpc"].ToString()))
                     {
-                        
-                        DbDetail.ItemFlexlineLPCNet = fila["ItemFlexline"].ToString() != "" ? fila["ItemFlexline"].ToString(): "No Existe!";  
-                        DbDetail.GlosaLPCnet = fila["GlosaLPCnet"].ToString() != "" ? fila["GlosaLPCnet"].ToString(): "Producto No Existe en LPCNet o no posee código Flexline";
+
+                        DbDetail.ItemFlexlineLPCNet = fila["ItemFlexline"].ToString() != "" ? fila["ItemFlexline"].ToString() : "No Existe!";
+                        DbDetail.GlosaLPCnet = fila["GlosaLPCnet"].ToString() != "" ? fila["GlosaLPCnet"].ToString() : "Producto No Existe en LPCNet o no posee código Flexline";
 
                         DbDetail.ItemColorLPCNet = fila["ItemColor"].ToString();
 
@@ -304,13 +327,24 @@ namespace ComercioNet2Flexline
                         DbDetail.UnidadFlexline = fila["Unidad"].ToString();
                         DbDetail.VigenciaProductoFlexline = fila["Vigente"].ToString();
 
-                        DbDetail.CantidadConvertidaFlexline = Math.Round(DbDetail.Cantidad * (DbDetail.UnidadContenida == 0 ? 1:DbDetail.UnidadContenida)) ;
-                        DbDetail.PrecioConvertidoFlexline = Math.Round(DbDetail.PrecioAjustado / (DbDetail.UnidadContenida == 0 ? 1:DbDetail.UnidadContenida)) ; 
+                        DbDetail.UnidadContenedoraLPCNET = Convert.ToDouble(fila["UnidadContenedora"]);
+                        // Cantidad * por UnidadContenedora
+                        DbDetail.CantidadConvertidaFlexline = DbDetail.Cantidad * (DbDetail.UnidadContenida == 0 ? 1 : DbDetail.UnidadContenida) * (DbDetail.UnidadContenedoraLPCNET == 0.00 ? 1 : DbDetail.UnidadContenedoraLPCNET);
+                        // Precio / por UnidadContenedora
+                        DbDetail.PrecioConvertidoFlexline = DbDetail.Precio / (DbDetail.UnidadContenedoraLPCNET == 0 ? 1 : DbDetail.UnidadContenedoraLPCNET);
 
-                        DbDetail.TotalConvertidoFlexline += Math.Round(DbDetail.CantidadConvertidaFlexline * DbDetail.PrecioConvertidoFlexline);
-
+                        DbDetail.PrecioAjustado = DbDetail.Total / DbDetail.Cantidad;
+                        DbDetail.ValDRLineal = DbDetail.PrecioConvertidoFlexline * (DbDetail.DRLineal / 100.00);
+                        DbDetail.ValDRLineal2 = (DbDetail.PrecioConvertidoFlexline + DbDetail.ValDRLineal) * (DbDetail.DRLineal2 / 100.00);
+                        DbDetail.ValDRLineal3 = (DbDetail.PrecioConvertidoFlexline + DbDetail.ValDRLineal + DbDetail.ValDRLineal2) * (DbDetail.DRLineal3 / 100.00);
+                        DbDetail.ValDRLineal4 = (DbDetail.PrecioConvertidoFlexline + DbDetail.ValDRLineal + DbDetail.ValDRLineal2 + DbDetail.ValDRLineal3) * (DbDetail.DRLineal4 / 100.00);
+                        DbDetail.ValDRLineal5 = (DbDetail.PrecioConvertidoFlexline + DbDetail.ValDRLineal + DbDetail.ValDRLineal2 + DbDetail.ValDRLineal3 + DbDetail.ValDRLineal4) * (DbDetail.DRLineal5 / 100.00);
+                        
+                        DbDetail.TotalConvertidoFlexline = Math.Round(DbDetail.CantidadConvertidaFlexline * (
+                                        DbDetail.PrecioConvertidoFlexline + DbDetail.ValDRLineal + DbDetail.ValDRLineal2
+                                        + DbDetail.ValDRLineal3 + DbDetail.ValDRLineal4 + DbDetail.ValDRLineal5)
+                                        );
                     }
-                    
                 }
                 
                 // Llena Observaciones y Normaliza Diferencias
@@ -325,58 +359,69 @@ namespace ComercioNet2Flexline
                     }
 
                     DbDetail.Observaciones = ""; 
-                    DbDetail.Observaciones += String.IsNullOrEmpty(DbDetail.ItemFlexlineLPCNet) ? "- Producto no Existe\n":"";
-                    DbDetail.Observaciones += DbDetail.UnidadContenida == 0? "- Unidad de Empaque no encontrada\n":"";
-                    DbDetail.Observaciones += (DbTable.Fecha <= DbDetail.FechaInicio || DbTable.Fecha >= DbDetail.FechaFin)? "- Lista de Precios vencida\n":"";
-                    DbDetail.Observaciones += DbDetail.VigenciaProductoFlexline != "S"? "- Producto no Vigente en Flexline \n":"";
-                    DbDetail.Observaciones += DbDetail.PrecioConvertidoFlexline != DbDetail.PrecioFlexline? "- Precio distinto a Lista de Precios Flexline \n":"";
-
-                    // Normaliza ItemFlexline sólo si no encuentra
-                    DbDetail.ItemFlexlineLPCNet = String.IsNullOrEmpty(DbDetail.ItemFlexlineLPCNet) ? "No Existe!": DbDetail.ItemFlexlineLPCNet; 
+                    if (String.IsNullOrEmpty(DbDetail.ItemFlexlineLPCNet) )
+                    {
+                        DbDetail.Observaciones += "- Producto no Existe en LPCNet\n";
+                        // Normaliza ItemFlexline sólo si no encuentra
+                        DbDetail.ItemFlexlineLPCNet = "No Existe!"; 
+                    }
+                    else {
+                        DbDetail.Observaciones += DbDetail.UnidadContenida == 0? "- Unidad de Empaque no encontrada\n":"";
+                        DbDetail.Observaciones += DbDetail.VigenciaProductoFlexline != "S"? "- Producto no Vigente en Flexline \n":"";
+                        DbDetail.Observaciones += Math.Abs(DbDetail.PrecioConvertidoFlexline - 
+                                                    DbDetail.PrecioFlexline) > (DbDetail.PrecioFlexline * 0.01) 
+                                                ? "- Precio distinto a Lista de Precios Flexline (1% Tolerancia)\n"
+                                                :"";
+                    }
 
                     // Calculo de Totales
                     DbTable.Total +=  Math.Round(DbDetail.TotalConvertidoFlexline);
 
                     //Asigna LP (Asume que todas las líneas del docto traen el mismo dato a partir de rev. de archivos 2020)
-                    DbTable.ListaPrecioCNET_ItemColor = String.IsNullOrEmpty(DbDetail.ListaPrecioFlexline)?"":DbDetail.ListaPrecioFlexline; 
+                    DbTable.ListaPrecioCNET_ItemColor = String.IsNullOrEmpty(DbDetail.ListaPrecioFlexline)?"":DbDetail.ListaPrecioFlexline;
+                    DbTable.isLpVencida = (DbTable.Fecha < DbDetail.FechaInicio || DbTable.Fecha > DbDetail.FechaFin);
 
                     // Sólo Tabla Dinámica, Quitar con refactor
-                    DbDetail.Fecha = DbTable.Fecha;
-                    DbDetail.Ctacte = DbTable.Ctacte;
-                    DbDetail.NombreCliente = DbTable.NombreCliente;
-                    DbDetail.CondPago = DbTable.CondPago;
-                    DbDetail.CasillaEDI = DbTable.CasillaEDI;
-                    DbDetail.TipoPlazoPago = DbTable.TipoPlazoPago;
-                    DbDetail.PlazoPago = DbTable.PlazoPago;
-                    DbDetail.TipoOC = DbTable.TipoOC;
-                    DbDetail.NroInternoProveedor = DbTable.NroInternoProveedor;
-                    DbDetail.GLNDireccionDespacho = DbTable.GLNDireccionDespacho;
-                    DbDetail.DireccionDespacho = DbTable.DireccionDespacho;
-                    DbDetail.FechaVcto = DbTable.FechaVcto;
-                    DbDetail.GLNComprador = DbTable.GLNComprador;
-                    DbDetail.UniqueId = DbTable.UniqueId;
-                    DbDetail.SalesDepartament = DbTable.SalesDepartament;
+                    // DbDetail.Fecha = DbTable.Fecha;
+                    // DbDetail.Ctacte = DbTable.Ctacte;
+                    // DbDetail.NombreCliente = DbTable.NombreCliente;
+                    // DbDetail.CondPago = DbTable.CondPago;
+                    // DbDetail.CasillaEDI = DbTable.CasillaEDI;
+                    // DbDetail.TipoPlazoPago = DbTable.TipoPlazoPago;
+                    // DbDetail.PlazoPago = DbTable.PlazoPago;
+                    // DbDetail.TipoOC = DbTable.TipoOC;
+                    // DbDetail.NroInternoProveedor = DbTable.NroInternoProveedor;
+                    // DbDetail.GLNDireccionDespacho = DbTable.GLNDireccionDespacho;
+                    // DbDetail.DireccionDespacho = DbTable.DireccionDespacho;
+                    // DbDetail.FechaVcto = DbTable.FechaVcto;
+                    // DbDetail.GLNComprador = DbTable.GLNComprador;
+                    // DbDetail.UniqueId = DbTable.UniqueId;
+                    // DbDetail.SalesDepartament = DbTable.SalesDepartament;
+                    // DbDetail.Proceso = DbTable.Proceso;
 
                 }
                 
-                var Obser4Aprobacion = DbDetail.Where(x => x.Observaciones != "");
+                var Obser4Aprobacion = DbDetail.Where(x =>  x.Empresa == DbTable.Empresa && x.Numero == DbTable.Numero && x.Observaciones != "");
                 DbTable.Aprobacion = Obser4Aprobacion.Count() == 0?"S":"P";
 
                 // Si trae Observaciones no graba archivos y mueve a objetados
-                ifError = Obser4Aprobacion.Count() != 0;
+                ifError = !ifError ? Obser4Aprobacion.Count() != 0: ifError;
 
                 if (!ifError && DbTable.DireccionDespacho != "")
                 {
+                    DbTable.Proceso = "Procesado";
                     int Resp = Program_Write(DbTable);
                     if (Resp == -1) 
                     {
                         oLog.Add("ERROR", String.Format("Error al intentar grabar la OC {0} de {1}", DbTable.Numero, DbTable.NombreCliente));
                         ifError = true;
                     }
-                }
+                } else { 
+                    DbTable.Proceso = "Objetado";
+                } 
 
                 // Envía Email, aún si no se escribió en tablas GEN
-                SendEmail(DbTable, ifError);
+                //SendEmail(DbTable, ifError);
 
             }
             return !ifError;   // Lógica inversa para controlar mov. a Objetados
@@ -502,17 +547,24 @@ namespace ComercioNet2Flexline
                         DbTable.Add(Encabezado);
                         
                     }
-                
+
                 // Líneas de Detalle
+
                 IEnumerable<DocumentoD> DetalleDistribuidora =
-                    from el in Xml4LINQ 
-                        .Elements(awNone + "body")  
+                    from el in Xml4LINQ
+                        .Elements(awNone + "body")
                         .Elements(aw + "transaction")
                         .Elements(awNone + "command")
                         .Elements(aw + "documentCommand")
                         .Elements(awNone + "documentCommandOperand")
                         .Elements(aw + "order")
                         .Elements(awNone + "lineItem")
+                        let DrsLineal = (from d in el.Elements(awNone + "allowanceCharge") //.Elements(awNone + "monetaryAmountOrPercentage").Elements(awNone + "percentage")
+                                         select new 
+                                         {
+                                             Tipo = (string)d.Attribute("allowanceOrChargeType"),
+                                             Porcentaje = ((int)d.Element(awNone + "monetaryAmountOrPercentage").Element(awNone + "percentage")) * ((string)d.Attribute("allowanceOrChargeType") == "CHARGE" ? 1 : -1),
+                                         }).ToList()
                     select new DocumentoD {
                         Empresa = Empresa,
                         Numero = ArrayFileName[2],
@@ -526,6 +578,17 @@ namespace ComercioNet2Flexline
 
                         UnidadContenida = (Double)el.Element(awNone + "containedUnits"),
                         UnidadContenidaUnitType = (string)el.Element(awNone + "containedUnits").Attribute("UnitType"),
+
+                        DRLineal = DrsLineal.Count  > 0 ? DrsLineal[0].Porcentaje : 0,
+                        DRLineal2 = DrsLineal.Count > 1 ? DrsLineal[1].Porcentaje : 0,
+                        DRLineal3 = DrsLineal.Count > 2 ? DrsLineal[2].Porcentaje : 0,
+                        DRLineal4 = DrsLineal.Count > 3 ? DrsLineal[3].Porcentaje : 0,
+                        DRLineal5 = DrsLineal.Count > 4 ? DrsLineal[4].Porcentaje : 0,
+
+                        //DRLinealNodes = (from d in el.Descendants(awNone + "allowanceCharge").Nodes() select d).ToList(),
+
+                        //DRLinealnumerable = (from d in el.Elements(awNone + "allowanceCharge") select d), 
+
 
                         Item = (string)el.Element(awNone + "itemIdentification").Element(awNone + "gtin"),
                         ItemBuyer = (string)el.Element(awNone + "itemIdentification").Element(awNone + "buyerItemNumber"),
@@ -542,10 +605,7 @@ namespace ComercioNet2Flexline
 
                 foreach (DocumentoD Registro in DetalleDistribuidora)  
                 {                  
-                    // Calculo PrecioAjustado D/R
-                    if (Registro.Cantidad > 0) {
-                        Registro.PrecioAjustado = Registro.Total / Registro.Cantidad;
-                    }
+
                     DbDetail.Add(Registro);   
                 }
             
@@ -649,7 +709,9 @@ namespace ComercioNet2Flexline
                 DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Talla/UM</span></th>";
                 DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Color/Desc</span></th>";
                 DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:bold;text-decoration:none'>Cantidad</span></th>";
+                DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Precio Flexline</span></th>";
                 DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Precio Unit.</span></th>";
+                DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>D/R</span></th>";
                 DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Unid/Emp.</span></th>";
                 DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:700;font-style:normal'>Empaques</span></th>";
                 DetalleHead += "            <th style='background-color:#EEEEEE;border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;font-weight:normal;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:bold'>Total</span></th>";
@@ -669,9 +731,11 @@ namespace ComercioNet2Flexline
                 DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{6}</span></td>";
                 DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{7}</span></td>";
                 DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{8}</span></td>";
-                DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'>{9}</td>";
-                DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'>{10}</td>";
-                DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:left;vertical-align:top;word-break:normal;color:red'>{11}</td>";
+                DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{9}</span></td>";
+                DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'><span style='font-weight:400;font-style:normal'>{10}</span></td>";
+                DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'>{11}</td>";
+                DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:center;vertical-align:top;word-break:normal'>{12}</td>";
+                DetalleItem += "            <td style='border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:11px;overflow:hidden;padding:6px 5px;text-align:left;vertical-align:top;word-break:normal;color:red'>{13}</td>";
                 DetalleItem += "        </tr>";
 
                 string footerTabla = @"
@@ -688,7 +752,7 @@ namespace ComercioNet2Flexline
                                     DbTable.NombreCliente, EmpresaStarfood, DbTable.Numero, DbTable.Fecha.ToString("dd-MM-yyyy"), 
                                     DbTable.Fecha.ToString("dd-MM-yyyy"), DbTable.FechaVcto.ToString("dd-MM-yyyy"), DbTable.PlazoPago + " " + DbTable.TipoPlazoPago,
                                     DbTable.DireccionDespacho == ""? "Falta Dir. Despacho": DbTable.DireccionDespacho,
-                                    DbTable.ListaPrecioCNET_ItemColor, DbTable.CondPago, 
+                                    (DbTable.ListaPrecioCNET_ItemColor + (DbTable.isLpVencida?" **Vencida**":"")), DbTable.CondPago, 
                                     DbTable.Promocion, DbTable.NroInternoProveedor);
 
                 string DetalleItemDocumento = "";
@@ -700,7 +764,8 @@ namespace ComercioNet2Flexline
 
                     DetalleItemDocumento += String.Format(DetalleItem,
                         Detail.Linea, Detail.Item, Detail.ItemFlexlineLPCNet, Detail.GlosaLPCnet, Detail.ItemSize,
-                        Detail.ItemColor, Detail.CantidadConvertidaFlexline, Detail.PrecioConvertidoFlexline.ToString("#,##0"), Detail.UnidadContenida,
+                        Detail.ItemColor, Detail.CantidadConvertidaFlexline, Detail.PrecioFlexline.ToString("#,##0"), Detail.PrecioConvertidoFlexline.ToString("#,##0"), (Detail.ValDRLineal + Detail.ValDRLineal2 + Detail.ValDRLineal3 + Detail.ValDRLineal4 + Detail.ValDRLineal5).ToString("#,##0") , 
+                        Detail.UnidadContenida,
                         Detail.Cantidad.ToString("#,##0.00") , Detail.TotalConvertidoFlexline.ToString("#,##0"), Detail.Observaciones.Replace("\n","<br>")
                         );
                 
@@ -712,7 +777,7 @@ namespace ComercioNet2Flexline
                 Texto = String.Format(Texto, 
                         DbTable.NombreCliente, Math.Round(DbTable.Total).ToString("#,##0"));
 
-                Mensaje.Body = Texto + (Obs == ""? Normal : !ifError ? Warning: ErrorEmail) 
+                Mensaje.Body = Texto + (Obs == "" && !DbTable.isLpVencida? Normal : !ifError ? Warning: ErrorEmail) 
                              +"<p>&nbsp;</p>" + EncabezadoPrincipal + "<p>&nbsp;</p>" 
                              + DetalleHead + DetalleItemDocumento 
                              + footerTabla;
@@ -797,7 +862,7 @@ namespace ComercioNet2Flexline
                             command.Parameters.AddWithValue("@correlativo", DbTable.Correlativo);
                             command.Parameters.AddWithValue("@fecha", DbTable.Fecha);
                             command.Parameters.AddWithValue("@cliente", Ctacte.Ctacte);
-                            command.Parameters.AddWithValue("@bodega", "01 LAG SUR");
+                            command.Parameters.AddWithValue("@bodega", DbTable.Empresa == "002"? "01-LIBERTADORES":"01 LAG SUR");
                             command.Parameters.AddWithValue("@fechavcto", DbTable.Fecha.AddDays(DbTable.DiasPagoFlexline != 0? DbTable.DiasPagoFlexline: DbTable.PlazoPago));   
                             command.Parameters.AddWithValue("@listaprecio",  DbTable.ListaPrecioCNET_ItemColor); 
 
@@ -857,7 +922,7 @@ namespace ComercioNet2Flexline
                                 + " idDocto, MontoAsignadoIngreso, OrigenIngreso, OrigenCodigo, TOTALRECAR, DESCPRORRA, IdSEG_EMPRESA, IdTIPODOCUMENTO, IdPRODUCTO, iddoctoDet )";
 
                             String SqltextDet = "Select "
-                                + " @empresa, @tipodocto, @correlativo, @secuencia, @linea, @producto, @cantidad, @precio, 0 porcentajedr, @subtotal, "
+                                + " @empresa, @tipodocto, @correlativo, @secuencia, @linea, @producto, @cantidad, @precio, @porcentajedr, @subtotal, "
                                 + " 0 impuesto, @neto, 0 drglobal, 0 costo, @total, @precioajustado, @unidadingreso, @cantidadingreso, @precioingreso, @subtotalingreso, "
                                 + " 0 impuestoingreso, @netoingreso, 0 drglobalingreso, @totalingreso, '' serie, '' lote, '' fechavcto, '' tipodoctoorigen, 0 correlativoorigen, 0 secuenciaorigen, "
                                 + " @bodega, '' centrocosto, '' proceso, 0 factorinventario, -1 factorinvproyectado, @fechaentrega, 0 cantidadasignada, @fecha, 0 nivel, 0 secciaproceso, "
@@ -871,9 +936,9 @@ namespace ComercioNet2Flexline
                                 + " '' analisis7, '' analisis8, '' analisis9, '' analisis10, '' analisis11, '' analisis12, '' analisis13, '' analisis14, '' analisis15, '' analisis16, "
                                 + " '' analisis17, '' analisis18, '' analisis19, '' analisis20, @unimeddynamic, '' prodalias, '' fechavigencialp, '' lotedestino, '' seriedestino, 'N' doctoorigenval, "
                                 + " 0 drglobal1, 0 drglobal2, 0 drglobal3, 0 drglobal4, 0 drglobal5, 0 drglobal1ingreso, 0 drglobal2ingreso, 0 drglobal3ingreso, 0 drglobal4ingreso, 0 drglobal5ingreso, "
-                                + " 0 drglobal1bimoneda, 0 drglobal2bimoneda, 0 drglobal3bimoneda, 0 drglobal4bimoneda, 0 drglobal5bimoneda, 0 porcentajedr2, 0 porcentajedr3, 0 porcentajedr4, 0 porcentajedr5, 0 valporcentajedr1, "
-                                + " 0 valporcentajedr2, 0 valporcentajedr3, 0 valporcentajedr4, 0 valporcentajedr5, 0 valporcentajedr1ingreso, 0 valporcentajedr2ingreso, 0 valporcentajedr3ingreso, 0 valporcentajedr4ingreso, 0 valporcentajedr5ingreso, 0 valporcentajedr1bimoneda, "
-                                + " 0 valporcentajedr2bimoneda, 0 valporcentajedr3bimoneda, 0 valporcentajedr4bimoneda, 0 valporcentajedr5bimoneda, 0 costobimoneda, 0 cupbimoneda, 0 montoasignado, '' analisis21, '' analisis22, '' analisis23, "
+                                + " 0 drglobal1bimoneda, 0 drglobal2bimoneda, 0 drglobal3bimoneda, 0 drglobal4bimoneda, 0 drglobal5bimoneda, @porcentajedr2, @porcentajedr3, @porcentajedr4, @porcentajedr5, @valporcentajedr1, "
+                                + " @valporcentajedr2, @valporcentajedr3, @valporcentajedr4, @valporcentajedr5, @valporcentajedr1ingreso, @valporcentajedr2ingreso, @valporcentajedr3ingreso, @valporcentajedr4ingreso, @valporcentajedr5ingreso, @valporcentajedr1bimoneda, "
+                                + " @valporcentajedr2bimoneda, @valporcentajedr3bimoneda, @valporcentajedr4bimoneda, @valporcentajedr5bimoneda, 0 costobimoneda, 0 cupbimoneda, 0 montoasignado, '' analisis21, '' analisis22, '' analisis23, "
                                 + " '' analisis24, '' analisis25, '' analisis26, '' analisis27, '' analisis28, '' analisis29, '' analisis30, '' receta, 0 cuotacontrato, 0 secuenciakit, "
                                 + " 0 iddocto, 0 montoasignadoingreso, 'Producto' origeningreso, @origencodigo, 0 totalrecar, 0 descprorra, 0 idseg_empresa, 0 idtipodocumento, 0 idproducto, 0 iddoctodet ";
 
@@ -896,6 +961,31 @@ namespace ComercioNet2Flexline
                                 command.Parameters.AddWithValue("@neto", DbDetail.TotalConvertidoFlexline);
                                 command.Parameters.AddWithValue("@total", DbDetail.TotalConvertidoFlexline);
                                 command.Parameters.AddWithValue("@precioajustado", DbDetail.PrecioConvertidoFlexline);
+
+                                command.Parameters.AddWithValue("@porcentajedr", DbDetail.DRLineal);
+                                command.Parameters.AddWithValue("@porcentajedr2", DbDetail.DRLineal2);
+                                command.Parameters.AddWithValue("@porcentajedr3", DbDetail.DRLineal3);
+                                command.Parameters.AddWithValue("@porcentajedr4", DbDetail.DRLineal4);
+                                command.Parameters.AddWithValue("@porcentajedr5", DbDetail.DRLineal5);
+
+                                command.Parameters.AddWithValue("@valporcentajedr1", DbDetail.ValDRLineal);
+                                command.Parameters.AddWithValue("@valporcentajedr2", DbDetail.ValDRLineal2);
+                                command.Parameters.AddWithValue("@valporcentajedr3", DbDetail.ValDRLineal3);
+                                command.Parameters.AddWithValue("@valporcentajedr4", DbDetail.ValDRLineal4);
+                                command.Parameters.AddWithValue("@valporcentajedr5", DbDetail.ValDRLineal5);
+
+                                command.Parameters.AddWithValue("@valporcentajedr1ingreso", DbDetail.ValDRLineal);
+                                command.Parameters.AddWithValue("@valporcentajedr2ingreso", DbDetail.ValDRLineal2);
+                                command.Parameters.AddWithValue("@valporcentajedr3ingreso", DbDetail.ValDRLineal3);
+                                command.Parameters.AddWithValue("@valporcentajedr4ingreso", DbDetail.ValDRLineal4);
+                                command.Parameters.AddWithValue("@valporcentajedr5ingreso", DbDetail.ValDRLineal5);
+
+                                command.Parameters.AddWithValue("@valporcentajedr1bimoneda", DbDetail.ValDRLineal);
+                                command.Parameters.AddWithValue("@valporcentajedr2bimoneda", DbDetail.ValDRLineal2);
+                                command.Parameters.AddWithValue("@valporcentajedr3bimoneda", DbDetail.ValDRLineal3);
+                                command.Parameters.AddWithValue("@valporcentajedr4bimoneda", DbDetail.ValDRLineal4);
+                                command.Parameters.AddWithValue("@valporcentajedr5bimoneda", DbDetail.ValDRLineal5);
+
                                 command.Parameters.AddWithValue("@unidadingreso", String.IsNullOrEmpty(DbDetail.UnidadFlexline) ?"UN":DbDetail.UnidadFlexline);
                                 command.Parameters.AddWithValue("@cantidadingreso", DbDetail.CantidadConvertidaFlexline);
                                 command.Parameters.AddWithValue("@precioingreso", DbDetail.PrecioConvertidoFlexline);
@@ -904,7 +994,7 @@ namespace ComercioNet2Flexline
                                 command.Parameters.AddWithValue("@netoingreso", DbDetail.TotalConvertidoFlexline);
                                 command.Parameters.AddWithValue("@totalingreso", DbDetail.TotalConvertidoFlexline);
 
-                                command.Parameters.AddWithValue("@bodega", "01 LAG SUR");
+                                command.Parameters.AddWithValue("@bodega", DbTable.Empresa == "002"? "01-LIBERTADORES":"01 LAG SUR");
                                 command.Parameters.AddWithValue("@fechaentrega", DbTable.Fecha.AddDays(DbTable.PlazoPago));
                                 command.Parameters.AddWithValue("@fecha", DbTable.Fecha);
 
@@ -1224,12 +1314,16 @@ namespace ComercioNet2Flexline
                         + " Isnull(Lpd.Valor,0) PrecioLPFlexline, p.Glosa GlosaFlexline, "
                         + " Isnull(Lp.Fec_Inicio,'') Fec_Inicio, Isnull(Fec_Final,'') Fec_Final, Isnull(p.Unidad,'') Unidad, " 
                         + " Isnull(p.Vigente,'N') Vigente, Isnull(Iva.Valor1, 0) Iva, " 
-                        + " Isnull(Cta.CondPago,'') CondPago, Isnull(cp.Valor1,0) DiasPago " 
+                        + " Isnull(Cta.CondPago,'') CondPago, Isnull(cp.Valor1,0) DiasPago, Isnull(cpCnet.LP,'') CondPagoCnet " 
                         + " From ListaprecioCnet a "
                         + " Left join Ctacte cta on cta.empresa=a.empresa and cta.Ctacte = @Ctacte and cta.Tipoctacte='Cliente' "
                         + " Left Join Producto p on p.Empresa= a.Empresa and p.Producto=a.ItemFlexline "
                         + " Left Join ListaPrecio lp on Lp.Empresa=a.Empresa and lp.LisPrecio=a.ListaPrecio "
                         + " Left Join ListaPrecioD Lpd on Lpd.Empresa=lp.Empresa and lpd.IdLisPrecio=Lp.IdLisPrecio and lpd.Producto=a.ItemFlexline "
+                        + " Left Join ( "
+                        + " Select Empresa, Max(Codigo) LP From Gen_TabCod Where Empresa=@Empresa and Tipo ='gen_pagoventas' and Valor1 = @DiasPago "
+                        + " and RELACIONTIPO1 = 'Cheque' Group by Empresa "
+                        + " ) cpCnet on cpCnet.empresa=a.empresa "
                         + " Left Join Gen_TabCod cp on cp.empresa=a.empresa and cp.tipo='gen_pagoventas' and cp.codigo=Cta.CondPago "
                         + " Left Join ( "
                         + "       Select a.Empresa, a.Texto, convert(date,a.Descripcion,103) FechaIni, Isnull(b.FechaFin, convert(date,'2099-12-31')) FechaFin, " 
@@ -1243,7 +1337,8 @@ namespace ComercioNet2Flexline
                         + "       ) b "
                         + "       where a.empresa = @Empresa and a.tipo = 'config.param' and a.texto='PARIVA' "
                         + " ) Iva on Iva.Empresa = a.Empresa and @Fecha between FechaIni and FechaFin "
-                        + " Where a.Empresa=@Empresa and a.ItemColor = isnull(@ItemColor,'') and a.ItemUpc in ({0}) ";
+                        + " Where a.Empresa=@Empresa and a.ItemColor = isnull(@ItemColor,'') "
+                        + " and a.EDI = @CasillaEDI and a.ItemUpc in ({0}) ";
 
                         string Items = "";
                         string PreFijoLP = "";
@@ -1258,10 +1353,12 @@ namespace ComercioNet2Flexline
                         SqlText = String.Format(SqlText, Items);
                         SqlCommand ComandoSQL = new SqlCommand(SqlText, connection);
                         ComandoSQL.Parameters.AddWithValue("Ctacte", DbTable.Ctacte);
+                        ComandoSQL.Parameters.AddWithValue("CasillaEDI", DbTable.CasillaEDI);
                         ComandoSQL.Parameters.AddWithValue("Empresa", DbTable.Empresa);
                         ComandoSQL.Parameters.AddWithValue("Fecha", DbTable.Fecha);
 
                         ComandoSQL.Parameters.AddWithValue("ItemColor", PreFijoLP);
+                        ComandoSQL.Parameters.AddWithValue("DiasPago", DbTable.PlazoPago);
 
                         SqlDataAdapter Adapter = new SqlDataAdapter(ComandoSQL);
                         DataTable dtCommandSQL = new DataTable();
@@ -1395,7 +1492,6 @@ namespace ComercioNet2Flexline
                 }
             }
         }
-        
         static Settings Params = new Settings();
         static App_log oLog = new App_log(AppDomain.CurrentDomain.BaseDirectory);
         static  List<Documento> DbTable = new List<Documento>();
@@ -1409,7 +1505,7 @@ namespace ComercioNet2Flexline
         public String Nombre { get; set; }    
         public String Direccion { get; set; }    
         public String Comuna { get; set; }    
-    }    
+    }
     public class Settings
     {
         public List<String[]> RutSociedades { get; set; }
@@ -1470,8 +1566,10 @@ namespace ComercioNet2Flexline
         public Double Total { get; set; }   //Calculado 
         public string ArchivoCNet { get; set; }    // Nombre Archivo
         public string ListaPrecioCNET_ItemColor { get; set; }    // Lista de Precios desde XML, extrae ItemColor desde 1ra. Linea de detalle (se asume que es única a partir de revisión de archivos 2020)
+        public bool isLpVencida { get; set; }
         public string Aprobacion { get; set; }    // Flag calculado para Aprobación del Docto 
         public Double Iva { get; set; }   // desde Config.param, Codigo PARIVA de Flexline
+        public string Proceso { get; set; } // Sólo Debug, guarda si docto fue procesado, objetado
     }
     public class DocumentoD
     {
@@ -1486,6 +1584,16 @@ namespace ComercioNet2Flexline
         public Double UnidadContenida { get; set; }    // containedUnits
         public String UnidadContenidaUnitType { get; set; }    // containedUnits/@UnitType
         public String Item { get; set; }                // itemIdentification/gtin
+        public int DRLineal { get; set; }               // lineItem/allowanceCharge
+        public int DRLineal2 { get; set; }              // lineItem/allowanceCharge
+        public int DRLineal3 { get; set; }              // lineItem/allowanceCharge
+        public int DRLineal4 { get; set; }              // lineItem/allowanceCharge
+        public int DRLineal5 { get; set; }              // lineItem/allowanceCharge
+        public Double ValDRLineal { get; set; }              // Calculado
+        public Double ValDRLineal2 { get; set; }              // Calculado
+        public Double ValDRLineal3 { get; set; }              // Calculado
+        public Double ValDRLineal4 { get; set; }              // Calculado
+        public Double ValDRLineal5 { get; set; }              // Calculado
         public String ItemBuyer { get; set; }           // itemIdentification/buyerItemNumber
         public String ItemVendor { get; set; }          // itemIdentification/vendorItemNumber
         public String ItemSize { get; set; }            // itemSize
@@ -1496,6 +1604,7 @@ namespace ComercioNet2Flexline
         public String ItemColorLPCNet { get; set; }          // Desde LPCnet Item_Color 
         public String GlosaLPCnet { get; set; }            // LpCnet Descripcion
         public Double PrecioLPCNET { get; set; }         // LpCnet Precio
+        public Double UnidadContenedoraLPCNET { get; set; }         // Factor conversión 
         public String ListaPrecioFlexline { get; set; }    // Flexline/Ctacte/Listaprecio
         public Double PrecioFlexline { get; set; }         // Flexline/ListaPrecio/Valor
         public DateTime FechaInicio { get; set; }         // Flexline/ListaPrecio/Fec_Inicio
@@ -1523,6 +1632,7 @@ namespace ComercioNet2Flexline
         public String GLNComprador { get; set; }     // //buyer/gln  ** 
         public String UniqueId { get; set; }        // typedEntityIdentification/entityIdentification/uniqueCreatorIdentification
         public String SalesDepartament { get; set; }    // salesDepartamentNumber
+        public string Proceso { get; set; } // Sólo Debug, guarda si docto fue procesado, objetado
 
     }
 
