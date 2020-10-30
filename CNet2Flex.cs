@@ -224,7 +224,7 @@ namespace ComercioNet2Flexline
                     }
                     
                 }  
-                
+                /*
                     // Sólo recopilar Info en Tabla Dinámica
                     foreach (var DbTable in DbTable)
                     {
@@ -264,7 +264,7 @@ namespace ComercioNet2Flexline
                         var output1 = ToCsvRow(det);
                         oLog.Add("CECDETALLE", String.Format("{0} ", output1));
                     }
-                    
+                    */
                 }
                 catch (Exception ex)
                 {
@@ -322,14 +322,17 @@ namespace ComercioNet2Flexline
                         DbDetail.PrecioLPCNET = Convert.ToDouble(fila["Precio"]);
                         DbDetail.ListaPrecioFlexline = fila["ListaPrecio"].ToString();
                         DbDetail.PrecioFlexline = Math.Round(Convert.ToDouble(fila["PrecioLPFlexline"]));
+                        DbDetail.FechaVigencialp = Convert.ToDateTime(fila["FechaVigencia"].ToString());
                         DbDetail.FechaInicio = Convert.ToDateTime(fila["Fec_Inicio"].ToString());
                         DbDetail.FechaFin = Convert.ToDateTime(fila["Fec_Final"].ToString());
                         DbDetail.UnidadFlexline = fila["Unidad"].ToString();
                         DbDetail.VigenciaProductoFlexline = fila["Vigente"].ToString();
 
-                        DbDetail.UnidadContenedoraLPCNET = Convert.ToDouble(fila["UnidadContenedora"]);
+                        DbDetail.UnidadContenedoraLPCNET = Convert.ToDouble(fila["Factor"]);
                         // Cantidad * por UnidadContenedora
-                        DbDetail.CantidadConvertidaFlexline = DbDetail.Cantidad * (DbDetail.UnidadContenida == 0 ? 1 : DbDetail.UnidadContenida) * (DbDetail.UnidadContenedoraLPCNET == 0.00 ? 1 : DbDetail.UnidadContenedoraLPCNET);
+                        DbDetail.CantidadConvertidaFlexline = DbDetail.Cantidad 
+                              * (DbDetail.UnidadContenida == 0 || (DbDetail.UnidadFlexline == "KG" || DbDetail.UnidadFlexline == "UN") ? 1 : DbDetail.UnidadContenida) // KG, UN
+                              * (DbDetail.UnidadContenedoraLPCNET == 0.00 ? 1 : DbDetail.UnidadContenedoraLPCNET);
                         // Precio / por UnidadContenedora
                         DbDetail.PrecioConvertidoFlexline = DbDetail.Precio / (DbDetail.UnidadContenedoraLPCNET == 0 ? 1 : DbDetail.UnidadContenedoraLPCNET);
 
@@ -371,6 +374,10 @@ namespace ComercioNet2Flexline
                         DbDetail.Observaciones += Math.Abs(DbDetail.PrecioConvertidoFlexline - 
                                                     DbDetail.PrecioFlexline) > (DbDetail.PrecioFlexline * 0.01) 
                                                 ? "- Precio distinto a Lista de Precios Flexline (1% Tolerancia)\n"
+                                                :"";
+                        DbDetail.Observaciones += Math.Abs(DbDetail.TotalConvertidoFlexline - 
+                                                    DbDetail.Total) > (DbDetail.Total * 0.01) 
+                                                ? "- Subtotal distinto, ver conversión de cantidades (1% Tolerancia)\n"
                                                 :"";
                     }
 
@@ -421,7 +428,7 @@ namespace ComercioNet2Flexline
                 } 
 
                 // Envía Email, aún si no se escribió en tablas GEN
-                //SendEmail(DbTable, ifError);
+                SendEmail(DbTable, ifError);
 
             }
             return !ifError;   // Lógica inversa para controlar mov. a Objetados
@@ -934,7 +941,7 @@ namespace ComercioNet2Flexline
                                 + " '' estado_prod, '' placa, '' transportista, '' tipopallet, '' tipocaja, 1 factorimpto, '' serieprint, @preciobimoneda, @subtotalbimoneda, 0 impuestobimoneda, "
                                 + " @netobimoneda, 0 drglobalbimoneda, @totalbimoneda, @preciolistap, '' analisis1, '' analisis2, '' analisis3, '' analisis4, '' analisis5, '' analisis6, "
                                 + " '' analisis7, '' analisis8, '' analisis9, '' analisis10, '' analisis11, '' analisis12, '' analisis13, '' analisis14, '' analisis15, '' analisis16, "
-                                + " '' analisis17, '' analisis18, '' analisis19, '' analisis20, @unimeddynamic, '' prodalias, '' fechavigencialp, '' lotedestino, '' seriedestino, 'N' doctoorigenval, "
+                                + " '' analisis17, '' analisis18, '' analisis19, '' analisis20, @unimeddynamic, '' prodalias, @fechavigencialp, '' lotedestino, '' seriedestino, 'N' doctoorigenval, "
                                 + " 0 drglobal1, 0 drglobal2, 0 drglobal3, 0 drglobal4, 0 drglobal5, 0 drglobal1ingreso, 0 drglobal2ingreso, 0 drglobal3ingreso, 0 drglobal4ingreso, 0 drglobal5ingreso, "
                                 + " 0 drglobal1bimoneda, 0 drglobal2bimoneda, 0 drglobal3bimoneda, 0 drglobal4bimoneda, 0 drglobal5bimoneda, @porcentajedr2, @porcentajedr3, @porcentajedr4, @porcentajedr5, @valporcentajedr1, "
                                 + " @valporcentajedr2, @valporcentajedr3, @valporcentajedr4, @valporcentajedr5, @valporcentajedr1ingreso, @valporcentajedr2ingreso, @valporcentajedr3ingreso, @valporcentajedr4ingreso, @valporcentajedr5ingreso, @valporcentajedr1bimoneda, "
@@ -1007,6 +1014,8 @@ namespace ComercioNet2Flexline
                                 command.Parameters.AddWithValue("@totalbimoneda", DbDetail.TotalConvertidoFlexline);
 
                                 command.Parameters.AddWithValue("@preciolistap", DbDetail.PrecioFlexline);
+                                command.Parameters.AddWithValue("@fechavigencialp", DbDetail.FechaVigencialp);
+                                
 
                                 command.Parameters.AddWithValue("@unimeddynamic", DbDetail.CantidadConvertidaFlexline);
                                 command.Parameters.AddWithValue("@origencodigo", DbDetail.ItemFlexlineLPCNet);
@@ -1165,7 +1174,7 @@ namespace ComercioNet2Flexline
 
                         SqlText = "Select Isnull(ItemUpc,'') ItemUpc, Isnull(ItemFlexline,'') Producto, "
                             + " ItemColor, Isnull(Descripcion,'') Glosa, Precio, UnidadContenedora, EDI "
-                            + " FROM ListaPrecioCnet a "
+                            + " FROM ListaPrecioCnet a With (Nolock)"
                             + " Where "
                             + " a.Empresa = @Empresa and a.ItemUpc in ({0}) ";
 
@@ -1208,8 +1217,8 @@ namespace ComercioNet2Flexline
                             + " Isnull(a.CondPago,'') CondPago, Isnull(a.ListaPrecio,'') ListaPrecio, Isnull(a.AnalisisCtacte5,'') CasillaEDI, "
                             + " Isnull(Cdir.Direccion,'') Direccion, Isnull(Cdir.Comuna,'') Comuna, Isnull(Cdir.Ciudad,'') Ciudad, "
                             + " Isnull(Cdir.IdentDireccion,'') IdentDireccion"
-                            + " FROM Ctacte a "
-                            + " Left Join CtaCteDirecciones Cdir on Cdir.Empresa=a.Empresa and Cdir.Ctacte=a.Ctacte " //and Cdir.IdentDireccion = @DirDespacho"
+                            + " FROM Ctacte a With (Nolock) "
+                            + " Left Join CtaCteDirecciones Cdir With (Nolock) on Cdir.Empresa=a.Empresa and Cdir.Ctacte=a.Ctacte " //and Cdir.IdentDireccion = @DirDespacho"
                             + " Where "
                             + " a.Empresa = @Empresa and a.AnalisisCtacte5 = @CasillaEDI ";
 
@@ -1240,17 +1249,28 @@ namespace ComercioNet2Flexline
                         connection.ConnectionString = Params.StringConexionFlexline;
 
                         connection.Open();
-
+                        // Doctos CNET busca 48 meses atrás (día server)
+                        // Doctos anteriores a CNET, sólo 2 meses (regla definida por Starfood)
                         string SqlText = "Select 1 Row "
-                            + " FROM Documento a "
+                            + " FROM Documento a With (Nolock) "
                             + " Where "
-                            + " a.Empresa = @Empresa and (a.TipoDocto = @NV1 or a.TipoDocto = @NV2) "
-                            + " and AnalisisE5 = @Numero and Fecha <= Dateadd(m,-2,Getdate()) and Vigencia <> 'A' ";
+                            + " a.Empresa = @Empresa and a.TipoDocto in (@NV1, @NV2, @NV3) "
+                            + " and AnalisisE5 = @Numero "
+                            + " and Fecha <= Dateadd(m, Case when tipodocto = @NV3 then -48 else -2 End, Getdate() ) "
+                            + " and Vigencia <> 'A' "
+                            + " Union " 
+                            + " Select 1 Row "
+                            + " FROM Gen_Documento a With (Nolock) "
+                            + " Where "
+                            + " a.Empresa = @Empresa and a.TipoDocto in (@NV1, @NV2, @NV3) "
+                            + " and AnalisisE5 = @Numero ";
+                            
 
                         SqlCommand ComandoSQL = new SqlCommand(SqlText, connection);
                         ComandoSQL.Parameters.AddWithValue("Empresa", DbTable.Empresa);
-                        ComandoSQL.Parameters.AddWithValue("NV1", "Nota de Ventax");
-                        ComandoSQL.Parameters.AddWithValue("NV2", "Nota Venta CNET");
+                        ComandoSQL.Parameters.AddWithValue("NV1", "Nota de Venta");
+                        ComandoSQL.Parameters.AddWithValue("NV2", "Nota VTA. S/LISTA");
+                        ComandoSQL.Parameters.AddWithValue("NV3", "Nota Venta CNET");
                         ComandoSQL.Parameters.AddWithValue("Numero", DbTable.Numero);
                         
                         SqlDataAdapter Adapter = new SqlDataAdapter(ComandoSQL);
@@ -1277,15 +1297,22 @@ namespace ComercioNet2Flexline
 
                         connection.Open();
 
-                        string SqlText = "Select isnull(Max(Correlativo),0)+1 Correlativo "
-                            + " FROM Gen_Documento a "
+                        string SqlText = "Select isnull(Max(Correlativo),0)+1 Correlativo From ( "
+                            + " Select isnull(Max(Correlativo),0) Correlativo "
+                            + " FROM Documento a With (Nolock) "
                             + " Where "
-                            + " a.Empresa = @Empresa and (a.TipoDocto = @NV1 or a.TipoDocto = @NV2) ";
+                            + " a.Empresa = @Empresa and a.TipoDocto = @NV1 "
+                            + " UNION All "
+                            + " Select isnull(Max(Correlativo),0) Correlativo "
+                            + " FROM Gen_Documento a With (Nolock) "
+                            + " Where "
+                            + " a.Empresa = @Empresa and a.TipoDocto = @NV1 " 
+                            + " ) x " ;    
+                            
 
                         SqlCommand ComandoSQL = new SqlCommand(SqlText, connection);
                         ComandoSQL.Parameters.AddWithValue("Empresa", DbTable.Empresa);
-                        ComandoSQL.Parameters.AddWithValue("NV1", "Nota de Ventax");
-                        ComandoSQL.Parameters.AddWithValue("NV2", "Nota Venta CNET");
+                        ComandoSQL.Parameters.AddWithValue("NV1", "Nota Venta CNET");
                         
                         SqlDataReader Registro = ComandoSQL.ExecuteReader();
 
@@ -1310,27 +1337,27 @@ namespace ComercioNet2Flexline
                         connection.ConnectionString = Params.StringConexionFlexline;
 
                         connection.Open();
-                         string SqlText = "Select a.ItemUpc, a.ItemFlexline, a.Descripcion GlosaLPCnet, a.Precio, a.UnidadContenedora, a.ListaPrecio, a.ItemColor, "
-                        + " Isnull(Lpd.Valor,0) PrecioLPFlexline, p.Glosa GlosaFlexline, "
+                         string SqlText = "Select a.ItemUpc, a.ItemFlexline, a.Descripcion GlosaLPCnet, a.Precio, a.Factor, a.ListaPrecio, a.ItemColor, "
+                        + " Isnull(Lpd.Valor,0) PrecioLPFlexline, Isnull(Lpd.FechaVigencia,'') FechaVigencia, p.Glosa GlosaFlexline, "
                         + " Isnull(Lp.Fec_Inicio,'') Fec_Inicio, Isnull(Fec_Final,'') Fec_Final, Isnull(p.Unidad,'') Unidad, " 
                         + " Isnull(p.Vigente,'N') Vigente, Isnull(Iva.Valor1, 0) Iva, " 
                         + " Isnull(Cta.CondPago,'') CondPago, Isnull(cp.Valor1,0) DiasPago, Isnull(cpCnet.LP,'') CondPagoCnet " 
-                        + " From ListaprecioCnet a "
-                        + " Left join Ctacte cta on cta.empresa=a.empresa and cta.Ctacte = @Ctacte and cta.Tipoctacte='Cliente' "
-                        + " Left Join Producto p on p.Empresa= a.Empresa and p.Producto=a.ItemFlexline "
-                        + " Left Join ListaPrecio lp on Lp.Empresa=a.Empresa and lp.LisPrecio=a.ListaPrecio "
-                        + " Left Join ListaPrecioD Lpd on Lpd.Empresa=lp.Empresa and lpd.IdLisPrecio=Lp.IdLisPrecio and lpd.Producto=a.ItemFlexline "
+                        + " From ListaprecioCnet a With (Nolock) "
+                        + " Left join Ctacte cta With (Nolock) on cta.empresa=a.empresa and cta.Ctacte = @Ctacte and cta.Tipoctacte='Cliente' "
+                        + " Left Join Producto p With (Nolock) on p.Empresa= a.Empresa and p.Producto=a.ItemFlexline "
+                        + " Left Join ListaPrecio lp With (Nolock) on Lp.Empresa=a.Empresa and lp.LisPrecio=a.ListaPrecio "
+                        + " Left Join ListaPrecioD Lpd With (Nolock) on Lpd.Empresa=lp.Empresa and lpd.IdLisPrecio=Lp.IdLisPrecio and lpd.Producto=a.ItemFlexline "
                         + " Left Join ( "
-                        + " Select Empresa, Max(Codigo) LP From Gen_TabCod Where Empresa=@Empresa and Tipo ='gen_pagoventas' and Valor1 = @DiasPago "
+                        + " Select Empresa, Max(Codigo) LP From Gen_TabCod With (Nolock) Where Empresa=@Empresa and Tipo ='gen_pagoventas' and Valor1 = @DiasPago "
                         + " and RELACIONTIPO1 = 'Cheque' Group by Empresa "
                         + " ) cpCnet on cpCnet.empresa=a.empresa "
-                        + " Left Join Gen_TabCod cp on cp.empresa=a.empresa and cp.tipo='gen_pagoventas' and cp.codigo=Cta.CondPago "
+                        + " Left Join Gen_TabCod cp With (Nolock) on cp.empresa=a.empresa and cp.tipo='gen_pagoventas' and cp.codigo=Cta.CondPago "
                         + " Left Join ( "
                         + "       Select a.Empresa, a.Texto, convert(date,a.Descripcion,103) FechaIni, Isnull(b.FechaFin, convert(date,'2099-12-31')) FechaFin, " 
-                        + "       a.Valor1 From gen_tabcod a  "
+                        + "       a.Valor1 From gen_tabcod a  With (Nolock) "
                         + "       OUTER apply ( "
                         + "           select top 1 dateadd(d,-1,cast(left(b.codigo,8) as date)) FechaFin "
-                        + "           from GEN_TABCOD b "
+                        + "           from GEN_TABCOD b With (Nolock) "
                         + "           where b.empresa=a.empresa and b.texto=a.texto and a.tipo=b.Tipo "
                         + "           AND convert(datetime, b.descripcion, 103) > convert(datetime, a.descripcion, 103) "
                         + "           order by 1 "
@@ -1607,6 +1634,7 @@ namespace ComercioNet2Flexline
         public Double UnidadContenedoraLPCNET { get; set; }         // Factor conversión 
         public String ListaPrecioFlexline { get; set; }    // Flexline/Ctacte/Listaprecio
         public Double PrecioFlexline { get; set; }         // Flexline/ListaPrecio/Valor
+        public DateTime FechaVigencialp { get; set; }         // Flexline/ListaPreciod/FechaVigencia
         public DateTime FechaInicio { get; set; }         // Flexline/ListaPrecio/Fec_Inicio
         public DateTime FechaFin { get; set; }         // Flexline/ListaPrecio/Fec_Final
         public String UnidadFlexline { get; set; }         // Flexline/Producto/Unidad
@@ -1633,7 +1661,13 @@ namespace ComercioNet2Flexline
         public String UniqueId { get; set; }        // typedEntityIdentification/entityIdentification/uniqueCreatorIdentification
         public String SalesDepartament { get; set; }    // salesDepartamentNumber
         public string Proceso { get; set; } // Sólo Debug, guarda si docto fue procesado, objetado
-
     }
-
+    
 }
+
+
+
+
+
+
+
