@@ -329,24 +329,31 @@ namespace ComercioNet2Flexline
                         DbDetail.VigenciaProductoFlexline = fila["Vigente"].ToString();
 
                         DbDetail.UnidadContenedoraLPCNET = Convert.ToDouble(fila["Factor"]);
-                        // Cantidad * por UnidadContenedora
-                        DbDetail.CantidadConvertidaFlexline = DbDetail.Cantidad 
-                              * (DbDetail.UnidadContenida == 0 || (DbDetail.UnidadFlexline == "KG" || DbDetail.UnidadFlexline == "UN") ? 1 : DbDetail.UnidadContenida) // KG, UN
-                              * (DbDetail.UnidadContenedoraLPCNET == 0.00 ? 1 : DbDetail.UnidadContenedoraLPCNET);
+
+                        // Calcula desde Precio Total (Obsoleto 02.11.2020)
+                        //DbDetail.CantidadConvertidaFlexline = DbDetail.Cantidad 
+                        //      * (DbDetail.UnidadContenida == 0 || (DbDetail.UnidadFlexline == "KG" || DbDetail.UnidadFlexline == "UN") ? 1 : DbDetail.UnidadContenida) // KG, UN
+                        //      * (DbDetail.UnidadContenedoraLPCNET == 0.00 ? 1 : DbDetail.UnidadContenedoraLPCNET);
+
                         // Precio / por UnidadContenedora
                         DbDetail.PrecioConvertidoFlexline = DbDetail.Precio / (DbDetail.UnidadContenedoraLPCNET == 0 ? 1 : DbDetail.UnidadContenedoraLPCNET);
 
                         DbDetail.PrecioAjustado = DbDetail.Total / DbDetail.Cantidad;
+
                         DbDetail.ValDRLineal = DbDetail.PrecioConvertidoFlexline * (DbDetail.DRLineal / 100.00);
                         DbDetail.ValDRLineal2 = (DbDetail.PrecioConvertidoFlexline + DbDetail.ValDRLineal) * (DbDetail.DRLineal2 / 100.00);
                         DbDetail.ValDRLineal3 = (DbDetail.PrecioConvertidoFlexline + DbDetail.ValDRLineal + DbDetail.ValDRLineal2) * (DbDetail.DRLineal3 / 100.00);
                         DbDetail.ValDRLineal4 = (DbDetail.PrecioConvertidoFlexline + DbDetail.ValDRLineal + DbDetail.ValDRLineal2 + DbDetail.ValDRLineal3) * (DbDetail.DRLineal4 / 100.00);
                         DbDetail.ValDRLineal5 = (DbDetail.PrecioConvertidoFlexline + DbDetail.ValDRLineal + DbDetail.ValDRLineal2 + DbDetail.ValDRLineal3 + DbDetail.ValDRLineal4) * (DbDetail.DRLineal5 / 100.00);
                         
-                        DbDetail.TotalConvertidoFlexline = Math.Round(DbDetail.CantidadConvertidaFlexline * (
-                                        DbDetail.PrecioConvertidoFlexline + DbDetail.ValDRLineal + DbDetail.ValDRLineal2
-                                        + DbDetail.ValDRLineal3 + DbDetail.ValDRLineal4 + DbDetail.ValDRLineal5)
-                                        );
+                        // Cantidad desde Total línea 
+                        double PrecioAjustado = (DbDetail.PrecioConvertidoFlexline 
+                                                + DbDetail.ValDRLineal + DbDetail.ValDRLineal2
+                                                + DbDetail.ValDRLineal3 + DbDetail.ValDRLineal4  
+                                                + DbDetail.ValDRLineal5);
+
+                        DbDetail.CantidadConvertidaFlexline =  DbDetail.Total / (PrecioAjustado == 0? 1: PrecioAjustado);
+                        DbDetail.TotalConvertidoFlexline = Math.Round(DbDetail.CantidadConvertidaFlexline * PrecioAjustado);
                     }
                 }
                 
@@ -377,7 +384,7 @@ namespace ComercioNet2Flexline
                                                 :"";
                         DbDetail.Observaciones += Math.Abs(DbDetail.TotalConvertidoFlexline - 
                                                     DbDetail.Total) > (DbDetail.Total * 0.01) 
-                                                ? "- Subtotal distinto, ver conversión de cantidades (1% Tolerancia)\n"
+                                                ? String.Format("- Subtotal distinto, ver conversión de cantidades (1% Tolerancia) {0} {1} \n",DbDetail.Total, DbDetail.PrecioConvertidoFlexline)
                                                 :"";
                     }
 
@@ -389,6 +396,7 @@ namespace ComercioNet2Flexline
                     DbTable.isLpVencida = (DbTable.Fecha < DbDetail.FechaInicio || DbTable.Fecha > DbDetail.FechaFin);
 
                     // Sólo Tabla Dinámica, Quitar con refactor
+                    /*
                     // DbDetail.Fecha = DbTable.Fecha;
                     // DbDetail.Ctacte = DbTable.Ctacte;
                     // DbDetail.NombreCliente = DbTable.NombreCliente;
@@ -405,6 +413,7 @@ namespace ComercioNet2Flexline
                     // DbDetail.UniqueId = DbTable.UniqueId;
                     // DbDetail.SalesDepartament = DbTable.SalesDepartament;
                     // DbDetail.Proceso = DbTable.Proceso;
+                    */
 
                 }
                 
