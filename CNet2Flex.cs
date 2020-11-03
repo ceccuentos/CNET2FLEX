@@ -433,7 +433,12 @@ namespace ComercioNet2Flexline
                         ifError = true;
                     }
                 } else { 
+                    ifError = true;
                     DbTable.Proceso = "Objetado";
+                    if (String.IsNullOrEmpty(DbTable.DireccionDespacho))
+                    {
+                        oLog.Add("ERROR", String.Format("Sin Dirección de Despacho", DbTable.Numero, DbTable.NombreCliente));
+                    }
                 } 
 
                 // Envía Email, aún si no se escribió en tablas GEN
@@ -892,7 +897,7 @@ namespace ComercioNet2Flexline
 
                             command.Parameters.AddWithValue("@aprobacion", DbTable.Aprobacion);  
                             command.Parameters.AddWithValue("@idctacte", DbTable.Ctacte);
-                            command.Parameters.AddWithValue("@glosa", String.Format("OC:{0};ID:{1}",DbTable.Numero, DbTable.UniqueId) );   
+                            command.Parameters.AddWithValue("@glosa", "" );   
                             command.Parameters.AddWithValue("@comentario1", String.Format("OC:{0};FechaVcto:{1}",DbTable.Numero, DbTable.Fecha.AddDays(DbTable.DiasPagoFlexline != 0? DbTable.DiasPagoFlexline: DbTable.PlazoPago)) );  
                             command.Parameters.AddWithValue("@comentario2", DbTable.ArchivoCNet); 
                             command.Parameters.AddWithValue("@nromensaje", 0);   // TODO: Documentación Flexline dice uso futuro, Corresponde al correlativo interno de compras
