@@ -310,6 +310,7 @@ namespace ComercioNet2Flexline
                     DbTable.Iva = Convert.ToDouble(fila["Iva"]);
                     DbTable.CondPago = fila["CondPagoCnet"].ToString() == "" ? fila["CondPago"].ToString(): fila["CondPagoCnet"].ToString();
                     DbTable.DiasPagoFlexline = fila["CondPagoCnet"].ToString() == "" ? Convert.ToInt32(fila["DiasPago"]) : DbTable.PlazoPago;
+                    DbTable.Bodega = fila["Bodega"].ToString();
 
                     foreach (var DbDetail in DbDetail.Where(x => x.Empresa == DbTable.Empresa && x.Numero == DbTable.Numero && x.Item == fila["ItemUpc"].ToString()))
                     {
@@ -327,6 +328,7 @@ namespace ComercioNet2Flexline
                         DbDetail.FechaFin = Convert.ToDateTime(fila["Fec_Final"].ToString());
                         DbDetail.UnidadFlexline = fila["Unidad"].ToString();
                         DbDetail.VigenciaProductoFlexline = fila["Vigente"].ToString();
+
 
                         DbDetail.UnidadContenedoraLPCNET = Convert.ToDouble(fila["Factor"]);
 
@@ -490,6 +492,7 @@ namespace ComercioNet2Flexline
                             xCtacte.ComunaDespacho = fila["Comuna"].ToString();
                             xCtacte.CiudadDespacho = fila["Ciudad"].ToString();
                             xCtacte.IdentDireccion = fila["IdentDireccion"].ToString();
+                            xCtacte.Vendedor = fila["Vendedor"].ToString();
                             DbCtacte.Add(xCtacte);
                         }
                 }
@@ -570,7 +573,6 @@ namespace ComercioNet2Flexline
                     }
 
                 // Líneas de Detalle
-
                 IEnumerable<DocumentoD> DetalleDistribuidora =
                     from el in Xml4LINQ
                         .Elements(awNone + "body")
@@ -580,7 +582,7 @@ namespace ComercioNet2Flexline
                         .Elements(awNone + "documentCommandOperand")
                         .Elements(aw + "order")
                         .Elements(awNone + "lineItem")
-                        let DrsLineal = (from d in el.Elements(awNone + "allowanceCharge") //.Elements(awNone + "monetaryAmountOrPercentage").Elements(awNone + "percentage")
+                        let DrsLineal = (from d in el.Elements(awNone + "allowanceCharge") 
                                          select new 
                                          {
                                              Tipo = (string)d.Attribute("allowanceOrChargeType"),
@@ -605,11 +607,6 @@ namespace ComercioNet2Flexline
                         DRLineal3 = DrsLineal.Count > 2 ? DrsLineal[2].Porcentaje : 0,
                         DRLineal4 = DrsLineal.Count > 3 ? DrsLineal[3].Porcentaje : 0,
                         DRLineal5 = DrsLineal.Count > 4 ? DrsLineal[4].Porcentaje : 0,
-
-                        //DRLinealNodes = (from d in el.Descendants(awNone + "allowanceCharge").Nodes() select d).ToList(),
-
-                        //DRLinealnumerable = (from d in el.Elements(awNone + "allowanceCharge") select d), 
-
 
                         Item = (string)el.Element(awNone + "itemIdentification").Element(awNone + "gtin"),
                         ItemBuyer = (string)el.Element(awNone + "itemIdentification").Element(awNone + "buyerItemNumber"),
@@ -785,7 +782,7 @@ namespace ComercioNet2Flexline
 
                     DetalleItemDocumento += String.Format(DetalleItem,
                         Detail.Linea, Detail.Item, Detail.ItemFlexlineLPCNet, Detail.GlosaLPCnet, Detail.ItemSize,
-                        Detail.ItemColor, Detail.CantidadConvertidaFlexline, Detail.PrecioFlexline.ToString("#,##0"), Detail.PrecioConvertidoFlexline.ToString("#,##0"), (Detail.ValDRLineal + Detail.ValDRLineal2 + Detail.ValDRLineal3 + Detail.ValDRLineal4 + Detail.ValDRLineal5).ToString("#,##0") , 
+                        Detail.ItemColor, Detail.CantidadConvertidaFlexline.ToString("#,##0"), Detail.PrecioFlexline.ToString("#,##0"), Detail.PrecioConvertidoFlexline.ToString("#,##0"), (Detail.ValDRLineal + Detail.ValDRLineal2 + Detail.ValDRLineal3 + Detail.ValDRLineal4 + Detail.ValDRLineal5).ToString("#,##0") , 
                         Detail.UnidadContenida,
                         Detail.Cantidad.ToString("#,##0.00") , Detail.TotalConvertidoFlexline.ToString("#,##0"), Detail.Observaciones.Replace("\n","<br>")
                         );
@@ -858,7 +855,7 @@ namespace ComercioNet2Flexline
 
                             Sqltext += "Select "
                             + " @empresa, @tipodocto, @correlativo, '' ctacte, @numero, @fecha, '' proveedor, @cliente, @bodega, '' bodega2, "
-                            + " '' local, '' comprador, '00 OFICINA' vendedor, '' centrocosto, @fechavcto, @listaprecio, '' analisis, '' zona, '' tipocta, 'PS' moneda, "
+                            + " '' local, '' comprador, @vendedor, '' centrocosto, @fechavcto, @listaprecio, '' analisis, '' zona, '' tipocta, 'PS' moneda, "
                             + " 1 paridad, '' reftipodocto, 0 refcorrelativo, '' referenciaexterna, @neto, @subtotal, @total, @netoingreso, @subtotalingreso, @totalingreso, "
                             + " '' centraliza, 'S' valoriza, '' costeo, @aprobacion, '' tipocomprobante, 0 nrocomprobante, '' fechacomprobante, @periodolibro, 0 factormonto, 1 factormontoproyectado, "
                             + " 'CLIENTE' tipoctacte, @idctacte, @glosa, @comentario1, @comentario2, '' comentario3, '' comentario4, '' estado, '' fechaestado, @nromensaje, "
@@ -883,7 +880,8 @@ namespace ComercioNet2Flexline
                             command.Parameters.AddWithValue("@correlativo", DbTable.Correlativo);
                             command.Parameters.AddWithValue("@fecha", DbTable.Fecha);
                             command.Parameters.AddWithValue("@cliente", Ctacte.Ctacte);
-                            command.Parameters.AddWithValue("@bodega", DbTable.Empresa == "002"? "01-LIBERTADORES":"01 LAG SUR");
+                            command.Parameters.AddWithValue("@vendedor", Ctacte.Vendedor);
+                            command.Parameters.AddWithValue("@bodega", String.IsNullOrEmpty(DbTable.Bodega)? DbTable.Empresa == "002"? "01-LIBERTADORES":"01 LAG SUR": DbTable.Bodega);
                             command.Parameters.AddWithValue("@fechavcto", DbTable.Fecha.AddDays(DbTable.DiasPagoFlexline != 0? DbTable.DiasPagoFlexline: DbTable.PlazoPago));   
                             command.Parameters.AddWithValue("@listaprecio",  DbTable.ListaPrecioCNET_ItemColor); 
 
@@ -895,9 +893,9 @@ namespace ComercioNet2Flexline
                             command.Parameters.AddWithValue("@totalingreso", Math.Round(DbTable.Total * (DbTable.Iva/100+1))); 
                             command.Parameters.AddWithValue("@periodolibro", DbTable.Fecha.Year*100 + DbTable.Fecha.Month);   
 
-                            command.Parameters.AddWithValue("@aprobacion", DbTable.Aprobacion);  
+                            command.Parameters.AddWithValue("@aprobacion", DbTable.isLpVencida ? "P": DbTable.Aprobacion);  
                             command.Parameters.AddWithValue("@idctacte", DbTable.Ctacte);
-                            command.Parameters.AddWithValue("@glosa", "" );   
+                            command.Parameters.AddWithValue("@glosa", " " );   
                             command.Parameters.AddWithValue("@comentario1", String.Format("OC:{0};FechaVcto:{1}",DbTable.Numero, DbTable.Fecha.AddDays(DbTable.DiasPagoFlexline != 0? DbTable.DiasPagoFlexline: DbTable.PlazoPago)) );  
                             command.Parameters.AddWithValue("@comentario2", DbTable.ArchivoCNet); 
                             command.Parameters.AddWithValue("@nromensaje", 0);   // TODO: Documentación Flexline dice uso futuro, Corresponde al correlativo interno de compras
@@ -1015,7 +1013,7 @@ namespace ComercioNet2Flexline
                                 command.Parameters.AddWithValue("@netoingreso", DbDetail.TotalConvertidoFlexline);
                                 command.Parameters.AddWithValue("@totalingreso", DbDetail.TotalConvertidoFlexline);
 
-                                command.Parameters.AddWithValue("@bodega", DbTable.Empresa == "002"? "01-LIBERTADORES":"01 LAG SUR");
+                                command.Parameters.AddWithValue("@bodega", String.IsNullOrEmpty(DbTable.Bodega)? DbTable.Empresa == "002"? "01-LIBERTADORES":"01 LAG SUR": DbTable.Bodega);
                                 command.Parameters.AddWithValue("@fechaentrega", DbTable.Fecha.AddDays(DbTable.PlazoPago));
                                 command.Parameters.AddWithValue("@fecha", DbTable.Fecha);
 
@@ -1230,7 +1228,7 @@ namespace ComercioNet2Flexline
                         string SqlText = "Select Isnull(a.Ctacte,'') Ctacte, Isnull(a.RazonSocial,'') RazonSocial, "
                             + " Isnull(a.CondPago,'') CondPago, Isnull(a.ListaPrecio,'') ListaPrecio, Isnull(a.AnalisisCtacte5,'') CasillaEDI, "
                             + " Isnull(Cdir.Direccion,'') Direccion, Isnull(Cdir.Comuna,'') Comuna, Isnull(Cdir.Ciudad,'') Ciudad, "
-                            + " Isnull(Cdir.IdentDireccion,'') IdentDireccion"
+                            + " Isnull(Cdir.IdentDireccion,'') IdentDireccion, Isnull(a.Ejecutivo,'') Vendedor"
                             + " FROM Ctacte a With (Nolock) "
                             + " Left Join CtaCteDirecciones Cdir With (Nolock) on Cdir.Empresa=a.Empresa and Cdir.Ctacte=a.Ctacte " //and Cdir.IdentDireccion = @DirDespacho"
                             + " Where "
@@ -1355,7 +1353,8 @@ namespace ComercioNet2Flexline
                         + " Isnull(Lpd.Valor,0) PrecioLPFlexline, Isnull(Lpd.FechaVigencia,'') FechaVigencia, p.Glosa GlosaFlexline, "
                         + " Isnull(Lp.Fec_Inicio,'') Fec_Inicio, Isnull(Fec_Final,'') Fec_Final, Isnull(p.Unidad,'') Unidad, " 
                         + " Isnull(p.Vigente,'N') Vigente, Isnull(Iva.Valor1, 0) Iva, " 
-                        + " Isnull(Cta.CondPago,'') CondPago, Isnull(cp.Valor1,0) DiasPago, Isnull(cpCnet.LP,'') CondPagoCnet " 
+                        + " Isnull(Cta.CondPago,'') CondPago, Isnull(cp.Valor1,0) DiasPago, Isnull(cpCnet.LP,'') CondPagoCnet, " 
+                        + " Isnull(a.Bodega,'') Bodega "
                         + " From ListaprecioCnet a With (Nolock) "
                         + " Left join Ctacte cta With (Nolock) on cta.empresa=a.empresa and cta.Ctacte = @Ctacte and cta.Tipoctacte='Cliente' "
                         + " Left Join Producto p With (Nolock) on p.Empresa= a.Empresa and p.Producto=a.ItemFlexline "
@@ -1578,6 +1577,7 @@ namespace ComercioNet2Flexline
         public String DireccionDespacho { get; set; }    
         public String ComunaDespacho { get; set; }    
         public String CiudadDespacho { get; set; }    
+        public String Vendedor { get; set; }    
     }
     public class Documento
     {
@@ -1611,6 +1611,7 @@ namespace ComercioNet2Flexline
         public string Aprobacion { get; set; }    // Flag calculado para Aprobación del Docto 
         public Double Iva { get; set; }   // desde Config.param, Codigo PARIVA de Flexline
         public string Proceso { get; set; } // Sólo Debug, guarda si docto fue procesado, objetado
+        public string Bodega { get; set; } // Desde Docto LPCNET (Vista ListaPrecioCNET)
     }
     public class DocumentoD
     {
