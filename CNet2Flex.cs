@@ -887,10 +887,10 @@ namespace ComercioNet2Flexline
 
                             command.Parameters.AddWithValue("@neto", Math.Round(DbTable.Total));   
                             command.Parameters.AddWithValue("@subtotal", Math.Round(DbTable.Total));   
-                            command.Parameters.AddWithValue("@total", Math.Round(DbTable.Total * (DbTable.Iva/100+1)));   
+                            command.Parameters.AddWithValue("@total", Math.Round((DbTable.Total * (DbTable.Iva/100+1)), 0, System.MidpointRounding.AwayFromZero ));   
                             command.Parameters.AddWithValue("@netoingreso", Math.Round(DbTable.Total)); 
                             command.Parameters.AddWithValue("@subtotalingreso", Math.Round(DbTable.Total)); 
-                            command.Parameters.AddWithValue("@totalingreso", Math.Round(DbTable.Total * (DbTable.Iva/100+1))); 
+                            command.Parameters.AddWithValue("@totalingreso",  Math.Round((DbTable.Total * (DbTable.Iva/100+1)), 0, System.MidpointRounding.AwayFromZero )); 
                             command.Parameters.AddWithValue("@periodolibro", DbTable.Fecha.Year*100 + DbTable.Fecha.Month);   
 
                             command.Parameters.AddWithValue("@aprobacion", DbTable.isLpVencida ? "P": DbTable.Aprobacion);  
@@ -908,7 +908,7 @@ namespace ComercioNet2Flexline
 
                             command.Parameters.AddWithValue("@netobimoneda", Math.Round(DbTable.Total));   
                             command.Parameters.AddWithValue("@subtotalbimoneda", Math.Round(DbTable.Total));   
-                            command.Parameters.AddWithValue("@totalbimoneda", Math.Round(DbTable.Total * (DbTable.Iva/100+1)));   
+                            command.Parameters.AddWithValue("@totalbimoneda",  Math.Round((DbTable.Total * (DbTable.Iva/100+1)), 0, System.MidpointRounding.AwayFromZero ));   
 
                             command.Parameters.AddWithValue("@analisise5", DbTable.Numero);
                             command.Parameters.AddWithValue("@analisise6", DbTable.Fecha.ToShortDateString());   
@@ -1059,15 +1059,15 @@ namespace ComercioNet2Flexline
 
                             command.Parameters.AddWithValue("@codigopago", DbTable.CondPago);
                             command.Parameters.AddWithValue("@fechavcto", DbTable.Fecha.AddDays(DbTable.DiasPagoFlexline != 0? DbTable.DiasPagoFlexline: DbTable.PlazoPago));
-                            command.Parameters.AddWithValue("@monto", Math.Round(DbTable.Total * (DbTable.Iva/100+1)));   
-                            command.Parameters.AddWithValue("@montoingreso", Math.Round(DbTable.Total * (DbTable.Iva/100+1)));   
+                            command.Parameters.AddWithValue("@monto", Math.Round((DbTable.Total * (DbTable.Iva/100+1)), 0, System.MidpointRounding.AwayFromZero ));   
+                            command.Parameters.AddWithValue("@montoingreso",  Math.Round((DbTable.Total * (DbTable.Iva/100+1)), 0, System.MidpointRounding.AwayFromZero ));   
                             
                             command.Parameters.AddWithValue("@tipodoctopago", "NOTA VENTA CNET");
                             command.Parameters.AddWithValue("@nrodoctopago", DbTable.Numero);
-                            command.Parameters.AddWithValue("@montobimoneda", Math.Round(DbTable.Total * (DbTable.Iva/100+1)));   
+                            command.Parameters.AddWithValue("@montobimoneda",  Math.Round((DbTable.Total * (DbTable.Iva/100+1)), 0, System.MidpointRounding.AwayFromZero ));   
                             command.Parameters.AddWithValue("@fechavctodocto", DbTable.Fecha.AddDays(DbTable.PlazoPago));
 
-                            command.Parameters.AddWithValue("@montopago", Math.Round(DbTable.Total * (DbTable.Iva/100+1)));   
+                            command.Parameters.AddWithValue("@montopago",  Math.Round((DbTable.Total * (DbTable.Iva/100+1)), 0, System.MidpointRounding.AwayFromZero ));   
 
                             Rows = command.ExecuteNonQuery();
                                 if (Rows != -1) {
@@ -1139,9 +1139,9 @@ namespace ComercioNet2Flexline
                                     default:
                                         command.Parameters.AddWithValue("@nombre", "IVA");
                                         command.Parameters.AddWithValue("@factor", 1);
-                                        command.Parameters.AddWithValue("@monto", Math.Round(DbTable.Total * DbTable.Iva/100)); 
-                                        command.Parameters.AddWithValue("@montoingreso", Math.Round(DbTable.Total * DbTable.Iva/100)); 
-                                        command.Parameters.AddWithValue("@montobimoneda", Math.Round(DbTable.Total * DbTable.Iva/100)); 
+                                        command.Parameters.AddWithValue("@monto", Math.Round((DbTable.Total * DbTable.Iva/100), 0, MidpointRounding.AwayFromZero)); 
+                                        command.Parameters.AddWithValue("@montoingreso", Math.Round((DbTable.Total * DbTable.Iva/100), 0, MidpointRounding.AwayFromZero)); 
+                                        command.Parameters.AddWithValue("@montobimoneda", Math.Round((DbTable.Total * DbTable.Iva/100), 0, MidpointRounding.AwayFromZero)); 
                                         break;
                                 }
                                 
