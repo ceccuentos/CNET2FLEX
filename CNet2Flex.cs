@@ -795,7 +795,7 @@ namespace ComercioNet2Flexline
                 Texto = String.Format(Texto, 
                         DbTable.NombreCliente, Math.Round(DbTable.Total).ToString("#,##0"));
 
-                Mensaje.Body = Texto + (Obs == "" && !DbTable.isLpVencida? Normal : !ifError ? Warning: ErrorEmail) 
+                Mensaje.Body = Texto + (Obs == "" && !DbTable.isLpVencida && !ifError ? Normal : !ifError ? Warning: ErrorEmail) 
                              +"<p>&nbsp;</p>" + EncabezadoPrincipal + "<p>&nbsp;</p>" 
                              + DetalleHead + DetalleItemDocumento 
                              + footerTabla;
@@ -1279,6 +1279,7 @@ namespace ComercioNet2Flexline
                             
 
                         SqlCommand ComandoSQL = new SqlCommand(SqlText, connection);
+                        ComandoSQL.CommandTimeout = 180;  // Sólo este proceso pues no existe Indice sobre campo AnalisisE5 (Cost: 99%... Ideal un indice, pero es Flexline!)
                         ComandoSQL.Parameters.AddWithValue("Empresa", DbTable.Empresa);
                         ComandoSQL.Parameters.AddWithValue("NV1", "Nota de Venta");
                         ComandoSQL.Parameters.AddWithValue("NV2", "Nota VTA. S/LISTA");
@@ -1294,7 +1295,7 @@ namespace ComercioNet2Flexline
             }
             catch(Exception ex)
             {
-                oLog.Add("ERROR", String.Format("Error al Leer Datos Ctacte en Flexline {0}", ex.Message));
+                oLog.Add("ERROR", String.Format("No se pudo verificar existencia de OC en ERP Flexline {0}", ex.Message));
                 return true;
             }
         }
